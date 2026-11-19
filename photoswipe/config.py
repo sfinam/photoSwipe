@@ -348,6 +348,7 @@ class Behavior:
     animations: bool = True
     raw_view_mode: str = "jpeg"  # jpeg | thumbnail | full
     undo_limit: int = 120
+    theme: str = "dark"  # dark | light
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any] | None) -> "Behavior":
@@ -360,12 +361,16 @@ class Behavior:
         except (TypeError, ValueError):
             undo_limit = 120
         undo_limit = min(1000, max(1, undo_limit))
+        theme = raw.get("theme", "dark")
+        if theme not in {"dark", "light"}:
+            theme = "dark"
         return cls(
             sort_by="name" if raw.get("sort_by") == "name" else "date",
             recursive_default=raw.get("recursive_default", True) is not False,
             animations=raw.get("animations", True) is not False,
             raw_view_mode=mode,
             undo_limit=undo_limit,
+            theme=theme,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -375,6 +380,7 @@ class Behavior:
             "animations": self.animations,
             "raw_view_mode": self.raw_view_mode,
             "undo_limit": self.undo_limit,
+            "theme": self.theme,
         }
 
 

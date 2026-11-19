@@ -37,6 +37,11 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             canonical_combo("KeyA+KeyB")
 
+    def test_theme_is_validated(self) -> None:
+        self.assertEqual(Behavior.from_dict({"theme": "light"}).theme, "light")
+        self.assertEqual(Behavior.from_dict({"theme": "neon"}).theme, "dark")
+        self.assertEqual(Behavior().theme, "dark")
+
     def test_undo_limit_is_clamped(self) -> None:
         self.assertEqual(Behavior.from_dict({"undo_limit": 0}).undo_limit, 1)
         self.assertEqual(Behavior.from_dict({"undo_limit": 2000}).undo_limit, 1000)

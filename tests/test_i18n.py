@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from photoswipe.__main__ import _parse_args, portable_data_dir, portable_root
 from photoswipe.config import ConfigStore
+from photoswipe.ui import theme
 from photoswipe.i18n import (
     current_language,
     format_date,
@@ -77,6 +78,18 @@ class I18nTests(unittest.TestCase):
         self.assertEqual(portable_data_dir(), portable_root() / "PhotoSwipeData")
         self.assertTrue(_parse_args(["--portable"]).portable)
         self.assertFalse(_parse_args([]).portable)
+
+    def test_light_and_dark_theme_palettes(self) -> None:
+        try:
+            theme.set_theme("light")
+            self.assertEqual(theme.BG, "#f2eee5")
+            self.assertIn("#f2eee5", theme.STYLESHEET)
+            self.assertNotIn("#0e1013", theme.STYLESHEET)
+            theme.set_theme("dark")
+            self.assertEqual(theme.BG, "#0e1013")
+            self.assertIn("#0e1013", theme.STYLESHEET)
+        finally:
+            theme.set_theme("dark")
 
     def test_language_persists_in_config(self) -> None:
         path = self.ws.base / "config.json"

@@ -21,6 +21,8 @@ A fast **desktop** photo culler: flip through a folder, keep the best shots, and
 ## Features
 
 - **Interface languages:** English, Russian, and Portuguese (Brazil). Choose the language in **Settings → General** or with the globe button in the Library header.
+- **Dark and light themes:** choose the palette in **Settings → General → Appearance**.
+- **Immersive fullscreen:** hide all controls except the exit button while every keyboard and controller shortcut keeps working.
 - **Portable Windows mode:** keep settings, sessions, and cache next to the executable on a USB drive.
 - Full-window photo review with a dark, distraction-free interface.
 - Four decisions: **Favorite**, **Trash**, **Maybe**, and **Second round**.
@@ -118,6 +120,12 @@ The second round does not move files: deferred photos stay in the source folder 
 
 Open **Settings → General** or click the globe button in the Library header. After saving, the window reopens in the new language.
 
+### Theme
+
+Choose **Settings → General → Appearance → Theme** between **Dark** and **Light**. The setting is saved immediately and the window reopens with the new palette. Both themes use the same layout, shortcuts, and destination folders.
+
+![Light theme](docs/screenshots/en/light.png)
+
 ![Language settings](docs/screenshots/en/language.png)
 
 The interface, dialogs, dates, error messages, shortcuts help, and this documentation are available in English, Russian, and Brazilian Portuguese. File names, folder names, and technical EXIF values are never translated.
@@ -136,12 +144,21 @@ The interface, dialogs, dates, error messages, shortcuts help, and this document
 | Zoom in / out | `+` / `−` |
 | Rotate right / left | `R` / `Shift + R` |
 | Reset view | `0` |
-| Fullscreen | `F` |
+| Immersive fullscreen | `F` |
 | Help | `?` or `F1` |
 | Back to library | `Esc` |
 | Quit | `Ctrl + Q` |
 
 Arrow keys work in any keyboard layout, including Russian. All combinations can be changed in **Settings → Shortcuts**; up to four variants per action. Conflicts are checked as you assign them.
+
+### Immersive fullscreen
+
+Press `F` in the sorter or comparison view. PhotoSwipe hides the header, action bar, comparison controls, and all other chrome. Only the photo area and a small **Exit fullscreen** button in the top-right corner remain.
+
+- All shortcuts still work — decisions, undo, comparison choices, single-side skip, RAW display, zoom, rotation, and controller buttons.
+- `Esc` or `F` exits fullscreen.
+- When the current queue/comparison finishes, the app exits fullscreen automatically so the completion screen is visible.
+- Routine toasts are suppressed in immersive mode; errors are still shown.
 
 ### Swipes
 
@@ -261,7 +278,7 @@ python -m unittest discover -s tests -t . -v
 python -m photoswipe
 ```
 
-The tests use the real `A7309498.ARW` and `A7309498.JPG` files in the repository root: grouping, metadata, RAW display modes, previews, moves, sidecars, comparison skip, undo limits, second round, undo, language switching, portable paths, and UI startup are covered. The suite currently has 39 tests.
+The tests use the real `A7309498.ARW` and `A7309498.JPG` files in the repository root: grouping, metadata, RAW display modes, previews, moves, sidecars, comparison skip, undo limits, second round, undo, language switching, portable paths, and UI startup are covered. The suite currently has 42 tests.
 
 ### Standalone build
 

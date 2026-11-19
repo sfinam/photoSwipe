@@ -112,14 +112,18 @@ class SortingPage(QWidget):
         self._workers: set[PreviewWorker] = set()
         self._prefetch_workers: set[PreviewWorker] = set()
         self._busy = False
+        self._immersive = False
         self._completion_signature: tuple | None = None
 
         root = QVBoxLayout(self)
         root.setContentsMargins(26, 18, 26, 16)
         root.setSpacing(12)
+        self._root_layout = root
+        self._root_margins = root.getContentsMargins()
 
         # ---- top header ---------------------------------------------------
         header = QWidget()
+        self.header = header
         header_layout = QVBoxLayout(header)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(7)
@@ -143,7 +147,7 @@ class SortingPage(QWidget):
         )
         self.round_badge = Badge("")
         self.round_badge.setStyleSheet(
-            f"color: {theme.ACCENT}; background: {theme.ACCENT_DARK}; border: 1px solid #55451f;"
+            f"color: {theme.ACCENT}; background: {theme.ACCENT_DARK}; border: 1px solid {theme.ACCENT_BORDER};"
             "border-radius: 8px; padding: 2px 7px; font-size: 8.2pt; font-weight: 600;"
         )
         self.round_badge.hide()
@@ -188,7 +192,7 @@ class SortingPage(QWidget):
         )
         self.settings_button.clicked.connect(self.settings_requested)
         self.fullscreen_button = IconButton(
-            "maximize", tr("Fullscreen (F)"), button_size=36, size=18
+            "maximize", tr("Immersive fullscreen (F)"), button_size=36, size=18
         )
         self.fullscreen_button.clicked.connect(self.fullscreen_requested)
         top_row.addWidget(self.help_button)
@@ -216,7 +220,7 @@ class SortingPage(QWidget):
         self.controller_label = QLabel("")
         self.controller_label.setStyleSheet(
             f"color: {theme.GREEN}; font-size: 8.7pt; background: {theme.GREEN_DARK};"
-            "border: 1px solid #2f4d3c; border-radius: 7px; padding: 2px 8px;"
+            f"border: 1px solid {theme.GREEN_BORDER}; border-radius: 7px; padding: 2px 8px;"
         )
         self.controller_label.setToolTip("")
         self.controller_label.hide()
@@ -239,6 +243,7 @@ class SortingPage(QWidget):
         stage_layout.setSpacing(0)
 
         stage_header = QWidget()
+        self.stage_header = stage_header
         stage_header.setStyleSheet("background: transparent;")
         stage_header_layout = QHBoxLayout(stage_header)
         stage_header_layout.setContentsMargins(20, 13, 14, 11)
@@ -255,7 +260,7 @@ class SortingPage(QWidget):
         self.format_badge = Badge("")
         self.loading_badge = Badge(tr("Loading…"))
         self.loading_badge.setStyleSheet(
-            f"color: {theme.BLUE}; background: {theme.BLUE_DARK}; border: 1px solid #2b405e;"
+            f"color: {theme.BLUE}; background: {theme.BLUE_DARK}; border: 1px solid {theme.BLUE_BORDER};"
             "border-radius: 8px; padding: 2px 8px; font-size: 8.2pt;"
         )
         self.loading_badge.hide()
@@ -405,7 +410,8 @@ class SortingPage(QWidget):
         )
         full = self.config.shortcuts.get("fullscreen", [])
         self.fullscreen_button.setToolTip(
-            tr("Fullscreen") + (f" ({display_combo(full[0])})" if full else "")
+            tr("Immersive fullscreen")
+            + (f" ({display_combo(full[0])})" if full else "")
         )
 
     # ------------------------------------------------------------------
@@ -429,7 +435,19 @@ class SortingPage(QWidget):
         self.current_id = None
         self.view.clear()
         self.stack.setCurrentWidget(self.stage)
-        self.action_bar.show()
+        self.action_bar.setVisible(not self._immersive)
+
+    def set_immersive(self, enabled: bool) -> None:
+        self._immersive = enabled
+        self.header.setVisible(not enabled)
+        self.stage_header.setVisible(not enabled)
+        self.action_bar.setVisible(
+            not enabled and self.stack.currentWidget() is self.stage
+        )
+        if enabled:
+            self._root_layout.setContentsMargins(0, 0, 0, 0)
+        else:
+            self._root_layout.setContentsMargins(*self._root_margins)
 
     def set_busy(self, busy: bool) -> None:
         self._busy = busy
@@ -471,7 +489,7 @@ class SortingPage(QWidget):
             self.show_completion()
             return
         self.stack.setCurrentWidget(self.stage)
-        self.action_bar.setVisible(True)
+        self.action_bar.setVisible(not self._immersive)
         choice, raw_full, _ = self._view_for(current)
         choice = max(0, min(choice, len(current.variants) - 1))
         group_changed = current.id != self.current_id
@@ -953,7 +971,7 @@ class SortingPage(QWidget):
                 tr("Second round · {count}", count=session.deferred_count)
             )
             primary.setProperty("role", "primary")
-            primary.setIcon(icon("arrow-right", "#1b1507", 16))
+            primary.setIcon(icon("arrow-right", theme.ACCENT_INK, 16))
             primary.setIconSize(QSize(16, 16))
             primary.setCursor(Qt.CursorShape.PointingHandCursor)
             primary.clicked.connect(self.next_round_requested)
@@ -974,7 +992,7 @@ class SortingPage(QWidget):
                 )
             )
             primary.setProperty("role", "primary")
-            primary.setIcon(icon("arrow-right", "#1b1507", 16))
+            primary.setIcon(icon("arrow-right", theme.ACCENT_INK, 16))
             primary.setIconSize(QSize(16, 16))
             primary.setCursor(Qt.CursorShape.PointingHandCursor)
             primary.clicked.connect(self.first_round_requested)
@@ -990,7 +1008,7 @@ class SortingPage(QWidget):
                 actions.addWidget(secondary)
             primary = QPushButton(tr("Back to library"))
             primary.setProperty("role", "primary")
-            primary.setIcon(icon("chevron-left", "#1b1507", 16))
+            primary.setIcon(icon("chevron-left", theme.ACCENT_INK, 16))
             primary.setIconSize(QSize(16, 16))
             primary.setCursor(Qt.CursorShape.PointingHandCursor)
             primary.clicked.connect(self.back_requested)

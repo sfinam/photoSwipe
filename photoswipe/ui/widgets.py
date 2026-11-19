@@ -160,8 +160,8 @@ class KeyBadge(QLabel):
         super().__init__(text, parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet(
-            f"background: rgba(255,255,255,12); color: {theme.TEXT_MUTED};"
-            "border: 1px solid rgba(255,255,255,18); border-radius: 6px;"
+            f"background: {theme.KEY_BADGE_BG}; color: {theme.TEXT_MUTED};"
+            f"border: 1px solid {theme.KEY_BADGE_BORDER}; border-radius: 6px;"
             "padding: 2px 6px; font-size: 8.5pt; font-weight: 600;"
         )
         self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
@@ -247,6 +247,7 @@ class Toast(QFrame):
         self._effect = QGraphicsOpacityEffect(self)
         self._effect.setOpacity(1.0)
         self.setGraphicsEffect(self._effect)
+        self._suppressed = False
         self._layout = QHBoxLayout(self)
         self._layout.setContentsMargins(14, 9, 16, 9)
         self._layout.setSpacing(9)
@@ -264,7 +265,14 @@ class Toast(QFrame):
         )
         self.adjustSize()
 
+    def set_suppressed(self, suppressed: bool) -> None:
+        self._suppressed = suppressed
+        if suppressed:
+            self.hide()
+
     def show_message(self, text: str, kind: str = "info", duration: int = 2600) -> None:
+        if self._suppressed and kind != "error":
+            return
         colors = {
             "info": theme.BLUE,
             "success": theme.GREEN,

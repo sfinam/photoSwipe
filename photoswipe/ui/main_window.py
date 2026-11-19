@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QProgressBar,
+    QPushButton,
     QStackedWidget,
     QTextEdit,
     QVBoxLayout,
@@ -119,6 +120,8 @@ class MainWindow(QMainWindow):
         self.store = ConfigStore()
         self.config: Config = self.store.load()
         set_language(self.config.language)
+        theme.set_theme(self.config.behavior.theme)
+        theme.apply_theme(QApplication.instance())
         self.manager = SessionManager(self.store)
         self.preview_service = PreviewService()
         self.current_source: Source | None = None
@@ -127,6 +130,7 @@ class MainWindow(QMainWindow):
         self._busy = False
         self._in_compare = False
         self._fullscreen = False
+        self._immersive = False
         self._summary_cache: dict[str, dict] = {}
         self._closing = False
 
@@ -159,6 +163,30 @@ class MainWindow(QMainWindow):
 
         self.scan_overlay = ScanOverlay(root)
         self.toast = Toast(root)
+        self.exit_fullscreen_button = QPushButton(tr("Exit fullscreen"), root)
+        self.exit_fullscreen_button.setObjectName("ImmersiveExit")
+        self.exit_fullscreen_button.setIcon(icon("minimize", "#f4f1ea", 16))
+        self.exit_fullscreen_button.setFixedHeight(40)
+        self.exit_fullscreen_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.exit_fullscreen_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.exit_fullscreen_button.setToolTip(tr("Exit fullscreen (Esc / F)"))
+        self.exit_fullscreen_button.setStyleSheet(
+            "QPushButton#ImmersiveExit {"
+            " background: rgba(17, 19, 23, 225);"
+            " color: #f4f1ea;"
+            " border: 1px solid rgba(255, 255, 255, 55);"
+            " border-radius: 10px;"
+            " padding: 8px 14px;"
+            " font-size: 9.5pt;"
+            " font-weight: 600;"
+            " }"
+            "QPushButton#ImmersiveExit:hover {"
+            " background: rgba(35, 38, 46, 240);"
+            " border-color: rgba(240, 189, 88, 150);"
+            " }"
+        )
+        self.exit_fullscreen_button.clicked.connect(self.toggle_fullscreen)
+        self.exit_fullscreen_button.hide()
         self._connect_signals()
         self._refresh_library()
         self.show_library()
@@ -257,6 +285,8 @@ class MainWindow(QMainWindow):
     def show_library(self) -> None:
         if self._scan_worker is not None:
             return
+        if self._immersive:
+            self._set_immersive(False)
         self._in_compare = False
         self._set_busy(False)
         self.sorting_page.clear()
@@ -366,6 +396,8 @@ class MainWindow(QMainWindow):
             return
         self._set_busy(False)
         self.sorting_page.refresh(force=True)
+        if self._immersive and not session.queue:
+            self._set_immersive(False)
         if self.config.controller.vibration:
             self.controller.rumble()
         messages = {
@@ -414,12 +446,15 @@ class MainWindow(QMainWindow):
         self._in_compare = True
         self.compare_page.set_session(self.current_session)
         self.stack.setCurrentWidget(self.compare_page)
+        if self._immersive:
+            self.compare_page.set_immersive(True)
         source_name = self.current_source.name if self.current_source else ""
         self.setWindowTitle(tr("PhotoSwipe — Compare · {source}", source=source_name))
 
     def exit_compare(self) -> None:
         self._in_compare = False
         self.stack.setCurrentWidget(self.sorting_page)
+        self.sorting_page.set_immersive(self._immersive)
         self.sorting_page.refresh(force=True)
         if self.current_source:
             self.setWindowTitle(f"PhotoSwipe — {self.current_source.name}")
@@ -450,6 +485,8 @@ class MainWindow(QMainWindow):
             self.compare_page.replace_side(side, self.current_session.queue[1])
         else:
             self.compare_page.reload(force=True)
+            if self._immersive:
+                self._set_immersive(False)
         if self.config.controller.vibration:
             self.controller.rumble()
         self.toast.show_message(
@@ -485,6 +522,10 @@ class MainWindow(QMainWindow):
             return
         self._set_busy(False)
         self.compare_page.advance()
+        if self._immersive and (
+            not self.current_session.queue or self.compare_page.pair_groups() is None
+        ):
+            self._set_immersive(False)
         if self.config.controller.vibration:
             self.controller.rumble()
         if choice == "both":
@@ -533,6 +574,7 @@ class MainWindow(QMainWindow):
     def _reopen_for_language(self) -> None:
         if self._closing:
             return
+        source_id = self.current_source.id if self.current_source else None
         new_window = MainWindow()
         geometry = (
             self.normalGeometry()
@@ -542,6 +584,8 @@ class MainWindow(QMainWindow):
         new_window.setGeometry(geometry)
         new_window.show()
         new_window.raise_()
+        if source_id:
+            QTimer.singleShot(0, lambda: new_window.open_source(source_id))
         self._replacement_window = new_window
         self.close()
 
@@ -581,7 +625,10 @@ class MainWindow(QMainWindow):
         self._set_raw_view_mode(order[(index + 1) % len(order)])
 
     def open_settings(self) -> None:
+        if self._immersive:
+            self._set_immersive(False)
         old_language = self.config.language
+        old_theme = self.config.behavior.theme
         old_raw_mode = self.config.behavior.raw_view_mode
         dialog = SettingsDialog(
             self.config,
@@ -597,8 +644,14 @@ class MainWindow(QMainWindow):
             return
         self.config = dialog.result_config
         self._save_config()
-        if self.config.language != old_language:
-            set_language(self.config.language)
+        if (
+            self.config.language != old_language
+            or self.config.behavior.theme != old_theme
+        ):
+            if self.config.language != old_language:
+                set_language(self.config.language)
+            if self.config.behavior.theme != old_theme:
+                theme.set_theme(self.config.behavior.theme)
             QTimer.singleShot(0, self._reopen_for_language)
             return
         self.controller.set_deadzone(self.config.controller.deadzone)
@@ -630,6 +683,8 @@ class MainWindow(QMainWindow):
             self.sorting_page.refresh(force=True)
 
     def open_help(self) -> None:
+        if self._immersive:
+            self._set_immersive(False)
         HelpDialog(self.config, self).exec()
 
     # ------------------------------------------------------------------
@@ -718,18 +773,27 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------
     def toggle_fullscreen(self) -> None:
-        if self._fullscreen:
-            self.showNormal()
-            self._fullscreen = False
-            self.sorting_page.fullscreen_button.setIcon(
-                icon("maximize", theme.TEXT_MUTED, 18)
-            )
-        else:
+        self._set_immersive(not self._fullscreen)
+
+    def _set_immersive(self, enabled: bool) -> None:
+        self._fullscreen = enabled
+        self._immersive = enabled
+        if enabled:
             self.showFullScreen()
-            self._fullscreen = True
-            self.sorting_page.fullscreen_button.setIcon(
-                icon("minimize", theme.TEXT_MUTED, 18)
-            )
+        else:
+            self.showNormal()
+        if self.stack.currentWidget() is self.sorting_page:
+            self.sorting_page.set_immersive(enabled)
+        elif self.stack.currentWidget() is self.compare_page:
+            self.compare_page.set_immersive(enabled)
+        self.sorting_page.fullscreen_button.setIcon(
+            icon("minimize" if enabled else "maximize", theme.TEXT_MUTED, 18)
+        )
+        self.exit_fullscreen_button.setVisible(enabled)
+        self.toast.set_suppressed(enabled)
+        if enabled:
+            self.toast.hide()
+            self.exit_fullscreen_button.raise_()
         QTimer.singleShot(0, self._reposition_overlays)
 
     # ------------------------------------------------------------------
@@ -915,6 +979,13 @@ class MainWindow(QMainWindow):
                 max(16, (self.root.width() - self.toast.width()) // 2),
                 self.root.height() - self.toast.height() - 24,
             )
+        if hasattr(self, "exit_fullscreen_button") and self._immersive:
+            self.exit_fullscreen_button.adjustSize()
+            self.exit_fullscreen_button.move(
+                max(16, self.root.width() - self.exit_fullscreen_button.width() - 24),
+                22,
+            )
+            self.exit_fullscreen_button.raise_()
 
     def closeEvent(self, event) -> None:  # type: ignore[override]
         self._closing = True

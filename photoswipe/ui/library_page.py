@@ -297,7 +297,7 @@ class SourceCard(Card):
         start.setProperty("role", "primary")
         start.setCursor(Qt.CursorShape.PointingHandCursor)
         start.setEnabled(source.exists)
-        start.setIcon(icon("arrow-right", "#1b1507", 15))
+        start.setIcon(icon("arrow-right", theme.ACCENT_INK, 15))
         start.setIconSize(QSize(15, 15))
         start.clicked.connect(lambda: self.open_requested.emit(self.source.id))
         footer.addWidget(start)
@@ -356,7 +356,7 @@ class AddFolderCard(QFrame):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(
             f"QFrame {{ background: transparent; border: 1px dashed {theme.BORDER_LIGHT}; border-radius: 16px; }}"
-            "QFrame:hover { border-color: #6a5a35; background: #17150f; }"
+            f"QFrame:hover {{ border-color: {theme.ACCENT_BORDER}; background: {theme.ADD_FOLDER_HOVER_BG}; }}"
             "QLabel { background: transparent; border: none; }"
         )
         layout = QVBoxLayout(self)
@@ -438,7 +438,7 @@ class LibraryPage(QWidget):
         self.settings_button.clicked.connect(self.settings_requested)
         self.add_button = QPushButton(tr("Add folder"))
         self.add_button.setProperty("role", "primary")
-        self.add_button.setIcon(icon("plus", "#1b1507", 16))
+        self.add_button.setIcon(icon("plus", theme.ACCENT_INK, 16))
         self.add_button.setIconSize(QSize(16, 16))
         self.add_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_button.clicked.connect(self.add_requested)
@@ -509,7 +509,7 @@ class LibraryPage(QWidget):
         panel.setProperty("role", "panel")
         panel.setStyleSheet(
             f'QFrame[role="panel"] {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:1,'
-            f" stop:0 #191b1f, stop:0.55 #15171b, stop:1 #1e1a12);"
+            f" stop:0 {theme.CARD_BG_A}, stop:0.55 {theme.CARD_BG_B}, stop:1 {theme.CARD_BG_C});"
             f" border: 1px solid {theme.BORDER}; border-radius: 18px; }}"
         )
         layout = QHBoxLayout(panel)
@@ -552,7 +552,7 @@ class LibraryPage(QWidget):
         actions = QHBoxLayout()
         add = QPushButton(tr("Add your first folder"))
         add.setProperty("role", "primary")
-        add.setIcon(icon("folder-plus", "#1b1507", 17))
+        add.setIcon(icon("folder-plus", theme.ACCENT_INK, 17))
         add.setIconSize(QSize(17, 17))
         add.setCursor(Qt.CursorShape.PointingHandCursor)
         add.clicked.connect(self.add_requested)

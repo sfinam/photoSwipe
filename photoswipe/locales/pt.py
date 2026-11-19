@@ -364,3 +364,30 @@ TRANSLATIONS.update(
         "Everything runs locally. Files are moved, not copied, with name-collision checks. The configured number of actions (120 by default) can be undone even after a restart; adjust it in Settings → Behavior. App data and preview cache live in the system app folder and never inside your photo library.": "Tudo roda localmente. Os arquivos são movidos, não copiados, com verificação de conflitos de nome. A quantidade configurada de ações (120 por padrão) pode ser desfeita mesmo após reiniciar; ajuste em Configurações → Comportamento. Dados e cache de prévias ficam na pasta do sistema, nunca na sua biblioteca de fotos.",
     }
 )
+
+TRANSLATIONS.update(
+    {
+        "Appearance": "Aparência",
+        "Choose the interface theme. The window reopens after saving.": "Escolha o tema da interface. A janela reabre após salvar.",
+        "Theme": "Tema",
+        "Dark": "Escuro",
+        "Light": "Claro",
+        "Light theme uses the same layout and keyboard shortcuts. The choice is saved with your other settings.": "O tema claro usa o mesmo layout e os mesmos atalhos. A escolha é salva com as demais configurações.",
+        "Exit fullscreen": "Sair da tela cheia",
+        "Exit fullscreen (Esc / F)": "Sair da tela cheia (Esc / F)",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "Hide the interface; Esc or F exits": "Ocultar a interface; Esc ou F sai",
+        "Immersive fullscreen": "Tela cheia imersiva",
+        "Immersive fullscreen (F)": "Tela cheia imersiva (F)",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "Fullscreen hides every control except the Exit fullscreen button. Esc or F exits, and all shortcuts keep working.": "A tela cheia oculta todos os controles, exceto o botão Sair da tela cheia. Esc ou F saem, e todos os atalhos continuam funcionando.",
+    }
+)

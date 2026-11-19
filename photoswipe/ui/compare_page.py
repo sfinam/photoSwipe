@@ -47,6 +47,7 @@ class ComparePane(QFrame):
         root.setSpacing(0)
 
         header = QWidget()
+        self.header_widget = header
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(14, 11, 11, 10)
         header_layout.setSpacing(9)
@@ -107,6 +108,7 @@ class ComparePane(QFrame):
         root.addWidget(self.view, 1)
 
         footer = QWidget()
+        self.footer_widget = footer
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(12, 10, 12, 12)
         footer_layout.setSpacing(10)
@@ -129,7 +131,7 @@ class ComparePane(QFrame):
         self.choose_button.setProperty("role", "primary")
         self.choose_button.setMinimumHeight(34)
         self.choose_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.choose_button.setIcon(icon("check", "#1b1507", 15))
+        self.choose_button.setIcon(icon("check", theme.ACCENT_INK, 15))
         self.choose_button.setIconSize(QSize(15, 15))
         self.choose_button.clicked.connect(self.choose)
         footer_layout.addWidget(self.choose_button)
@@ -171,6 +173,10 @@ class ComparePane(QFrame):
                 tr("Choose {letter} ({hint})", letter=self.letter, hint=shortcut_hint)
             )
 
+    def set_immersive(self, enabled: bool) -> None:
+        self.header_widget.setVisible(not enabled)
+        self.footer_widget.setVisible(not enabled)
+
     def set_busy(self, busy: bool, can_skip: bool = True) -> None:
         self.choose_button.setEnabled(not busy and self.group is not None)
         self.skip_button.setEnabled(not busy and self.group is not None and can_skip)
@@ -200,10 +206,13 @@ class ComparePage(QWidget):
         self._workers: set[PreviewWorker] = set()
         self._pixmap_cache: OrderedDict[str, QPixmap] = OrderedDict()
         self._loaded_pair_ids: tuple[str, str] | None = None
+        self._immersive = False
 
         root = QVBoxLayout(self)
         root.setContentsMargins(26, 18, 26, 16)
         root.setSpacing(12)
+        self._root_layout = root
+        self._root_margins = root.getContentsMargins()
 
         header = QHBoxLayout()
         header.setSpacing(10)
@@ -223,7 +232,7 @@ class ComparePage(QWidget):
         title.setStyleSheet(f"color: {theme.TEXT}; font-size: 15pt; font-weight: 750;")
         self.pair_badge = Badge("")
         self.pair_badge.setStyleSheet(
-            f"color: {theme.BLUE}; background: {theme.BLUE_DARK}; border: 1px solid #2c405e;"
+            f"color: {theme.BLUE}; background: {theme.BLUE_DARK}; border: 1px solid {theme.BLUE_BORDER};"
             "border-radius: 8px; padding: 2px 8px; font-size: 8.2pt;"
         )
         title_row.addWidget(title)
@@ -265,7 +274,10 @@ class ComparePage(QWidget):
         header.addWidget(help_button)
         header.addWidget(settings_button)
         header.addWidget(exit_button)
-        root.addLayout(header)
+        header_widget = QWidget()
+        header_widget.setLayout(header)
+        self.header_widget = header_widget
+        root.addWidget(header_widget)
 
         self.stack = QStackedWidget()
         root.addWidget(self.stack, 1)
@@ -306,7 +318,10 @@ class ComparePage(QWidget):
         self.skip_button.clicked.connect(lambda: self._choose("skip"))
         bottom.addWidget(self.both_button)
         bottom.addWidget(self.skip_button)
-        pairs_layout.addLayout(bottom)
+        bottom_widget = QWidget()
+        bottom_widget.setLayout(bottom)
+        self.bottom_widget = bottom_widget
+        pairs_layout.addWidget(bottom_widget)
         self.stack.addWidget(pairs_widget)
         self.pairs_widget = pairs_widget
 
@@ -327,7 +342,7 @@ class ComparePage(QWidget):
         done_icon.setFixedSize(64, 64)
         done_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         done_icon.setStyleSheet(
-            f"background: {theme.ACCENT_DARK}; border: 1px solid #5a4821; border-radius: 32px;"
+            f"background: {theme.ACCENT_DARK}; border: 1px solid {theme.ACCENT_BORDER}; border-radius: 32px;"
         )
         done_icon.setPixmap(icon("compare", theme.ACCENT, 28).pixmap(28, 28))
         card_layout.addWidget(done_icon, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -345,7 +360,7 @@ class ComparePage(QWidget):
         done_button = QPushButton(tr("Back to review"))
         done_button.setProperty("role", "primary")
         done_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        done_button.setIcon(icon("chevron-left", "#1b1507", 16))
+        done_button.setIcon(icon("chevron-left", theme.ACCENT_INK, 16))
         done_button.setIconSize(QSize(16, 16))
         done_button.clicked.connect(self.exit_requested)
         card_layout.addWidget(done_button, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -554,6 +569,18 @@ class ComparePage(QWidget):
         if bindings:
             tip += f" ({display_combo(bindings[0])})"
         self.view_mode_button.setToolTip(tip)
+
+    def set_immersive(self, enabled: bool) -> None:
+        self._immersive = enabled
+        self.header_widget.setVisible(not enabled)
+        self.bottom_widget.setVisible(not enabled)
+        self.left.set_immersive(enabled)
+        self.right.set_immersive(enabled)
+        if enabled:
+            self._root_layout.setContentsMargins(0, 0, 0, 0)
+        else:
+            self._root_layout.setContentsMargins(*self._root_margins)
+        self.set_busy(self._busy)
 
     def pair_groups(self) -> tuple[PhotoGroup, PhotoGroup] | None:
         return self.pair

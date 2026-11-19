@@ -364,3 +364,30 @@ TRANSLATIONS.update(
         "Everything runs locally. Files are moved, not copied, with name-collision checks. The configured number of actions (120 by default) can be undone even after a restart; adjust it in Settings → Behavior. App data and preview cache live in the system app folder and never inside your photo library.": "Всё работает локально. Файлы перемещаются, а не копируются, с проверкой конфликтов имён. Настроенное число действий (по умолчанию 120) можно отменить даже после перезапуска; измените его в «Настройки → Поведение». Данные и кэш превью лежат в системной папке приложения и не попадают в вашу фотобиблиотеку.",
     }
 )
+
+TRANSLATIONS.update(
+    {
+        "Appearance": "Внешний вид",
+        "Choose the interface theme. The window reopens after saving.": "Выберите тему интерфейса. После сохранения окно откроется заново.",
+        "Theme": "Тема",
+        "Dark": "Тёмная",
+        "Light": "Светлая",
+        "Light theme uses the same layout and keyboard shortcuts. The choice is saved with your other settings.": "Светлая тема использует ту же раскладку и те же сочетания клавиш. Выбор сохраняется вместе с остальными настройками.",
+        "Exit fullscreen": "Выйти из полноэкранного режима",
+        "Exit fullscreen (Esc / F)": "Выйти из полноэкранного режима (Esc / F)",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "Hide the interface; Esc or F exits": "Скрыть интерфейс; выход по Esc или F",
+        "Immersive fullscreen": "Полноэкранный режим без интерфейса",
+        "Immersive fullscreen (F)": "Полноэкранный режим без интерфейса (F)",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "Fullscreen hides every control except the Exit fullscreen button. Esc or F exits, and all shortcuts keep working.": "Полноэкранный режим скрывает всё, кроме кнопки выхода. Esc или F выходят, а все горячие клавиши продолжают работать.",
+    }
+)

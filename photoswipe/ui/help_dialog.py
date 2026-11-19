@@ -107,6 +107,13 @@ class HelpDialog(QDialog):
                 )
             )
         )
+        layout.addWidget(
+            self._note(
+                tr(
+                    "Fullscreen hides every control except the Exit fullscreen button. Esc or F exits, and all shortcuts keep working."
+                )
+            )
+        )
         layout.addStretch(1)
         return self._scroll(page)
 

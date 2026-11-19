@@ -5,42 +5,133 @@ from PySide6.QtWidgets import QApplication
 
 # Palette tokens shared by widgets that need explicit colors (icons, custom
 # painting, overlays) and by the stylesheet below.
-BG = "#0e1013"
-BG_DEEP = "#0a0b0d"
-PANEL = "#16191e"
-PANEL_RAISED = "#1c2026"
-PANEL_HOVER = "#232832"
-BORDER = "#282d36"
-BORDER_LIGHT = "#353c48"
-TEXT = "#eceef2"
-TEXT_MUTED = "#9aa1ad"
-TEXT_DIM = "#6d7480"
-ACCENT = "#f0bd58"
-ACCENT_HOVER = "#f6ca72"
-ACCENT_DARK = "#2a2110"
-GREEN = "#64c48e"
-GREEN_DARK = "#14251c"
-RED = "#ed7078"
-RED_DARK = "#271619"
-AMBER = "#e4a84f"
-AMBER_DARK = "#241d10"
-BLUE = "#78aaf5"
-BLUE_DARK = "#151d2a"
-VIOLET = "#b295f2"
+DARK = {
+    "BG": "#0e1013",
+    "BG_DEEP": "#0a0b0d",
+    "PANEL": "#16191e",
+    "PANEL_RAISED": "#1c2026",
+    "PANEL_HOVER": "#232832",
+    "BORDER": "#282d36",
+    "BORDER_LIGHT": "#353c48",
+    "TEXT": "#eceef2",
+    "TEXT_MUTED": "#9aa1ad",
+    "TEXT_DIM": "#6d7480",
+    "ACCENT": "#f0bd58",
+    "ACCENT_HOVER": "#f6ca72",
+    "ACCENT_DARK": "#2a2110",
+    "ACCENT_INK": "#1b1507",
+    "ACCENT_BORDER": "#55451f",
+    "GREEN": "#64c48e",
+    "GREEN_DARK": "#14251c",
+    "GREEN_BORDER": "#2f4d3c",
+    "RED": "#ed7078",
+    "RED_DARK": "#271619",
+    "AMBER": "#e4a84f",
+    "AMBER_DARK": "#241d10",
+    "BLUE": "#78aaf5",
+    "BLUE_DARK": "#151d2a",
+    "BLUE_BORDER": "#2c405e",
+    "VIOLET": "#b295f2",
+    "CARD_BG_A": "#191b1f",
+    "CARD_BG_B": "#15171b",
+    "CARD_BG_C": "#1e1a12",
+    "ADD_FOLDER_HOVER_BG": "#17150f",
+    "KEY_BADGE_BG": "rgba(255,255,255,12)",
+    "KEY_BADGE_BORDER": "rgba(255,255,255,18)",
+}
 
+LIGHT = {
+    "BG": "#f2eee5",
+    "BG_DEEP": "#e9e2d5",
+    "PANEL": "#fffdf8",
+    "PANEL_RAISED": "#f8f4eb",
+    "PANEL_HOVER": "#eee7da",
+    "BORDER": "#d9d0c1",
+    "BORDER_LIGHT": "#c7bcab",
+    "TEXT": "#28241d",
+    "TEXT_MUTED": "#6e675b",
+    "TEXT_DIM": "#968d7e",
+    "ACCENT": "#b97413",
+    "ACCENT_HOVER": "#a9650d",
+    "ACCENT_DARK": "#f5e6c8",
+    "ACCENT_INK": "#2b1c07",
+    "ACCENT_BORDER": "#d4ad67",
+    "GREEN": "#2f7d55",
+    "GREEN_DARK": "#e3f1e8",
+    "GREEN_BORDER": "#a9c9b4",
+    "RED": "#b84650",
+    "RED_DARK": "#f8e3e5",
+    "AMBER": "#9d6718",
+    "AMBER_DARK": "#f8ecd7",
+    "BLUE": "#3d6ea8",
+    "BLUE_DARK": "#e4edf8",
+    "BLUE_BORDER": "#b7c9e1",
+    "VIOLET": "#7459a8",
+    "CARD_BG_A": "#fbf8f1",
+    "CARD_BG_B": "#f2ecdf",
+    "CARD_BG_C": "#f7ebd8",
+    "ADD_FOLDER_HOVER_BG": "#fbf4e4",
+    "KEY_BADGE_BG": "rgba(0,0,0,8)",
+    "KEY_BADGE_BORDER": "rgba(0,0,0,16)",
+}
+
+DARK_VERDICT_BG = {
+    "favorite": "#18261f",
+    "trash": "#281a1d",
+    "maybe": "#262013",
+    "round2": "#17202e",
+}
+LIGHT_VERDICT_BG = {
+    "favorite": "#e8f3ec",
+    "trash": "#f9e7e9",
+    "maybe": "#f7edd9",
+    "round2": "#e7eff9",
+}
+
+globals().update(DARK)
+# Static aliases keep the stylesheet readable and keep linters/type checkers
+# aware of the names that set_theme() swaps at runtime.
+BG = DARK["BG"]
+BG_DEEP = DARK["BG_DEEP"]
+PANEL = DARK["PANEL"]
+PANEL_RAISED = DARK["PANEL_RAISED"]
+PANEL_HOVER = DARK["PANEL_HOVER"]
+BORDER = DARK["BORDER"]
+BORDER_LIGHT = DARK["BORDER_LIGHT"]
+TEXT = DARK["TEXT"]
+TEXT_MUTED = DARK["TEXT_MUTED"]
+TEXT_DIM = DARK["TEXT_DIM"]
+ACCENT = DARK["ACCENT"]
+ACCENT_HOVER = DARK["ACCENT_HOVER"]
+ACCENT_DARK = DARK["ACCENT_DARK"]
+ACCENT_INK = DARK["ACCENT_INK"]
+ACCENT_BORDER = DARK["ACCENT_BORDER"]
+GREEN = DARK["GREEN"]
+GREEN_DARK = DARK["GREEN_DARK"]
+GREEN_BORDER = DARK["GREEN_BORDER"]
+RED = DARK["RED"]
+RED_DARK = DARK["RED_DARK"]
+AMBER = DARK["AMBER"]
+AMBER_DARK = DARK["AMBER_DARK"]
+BLUE = DARK["BLUE"]
+BLUE_DARK = DARK["BLUE_DARK"]
+BLUE_BORDER = DARK["BLUE_BORDER"]
+VIOLET = DARK["VIOLET"]
+CARD_BG_A = DARK["CARD_BG_A"]
+CARD_BG_B = DARK["CARD_BG_B"]
+CARD_BG_C = DARK["CARD_BG_C"]
+ADD_FOLDER_HOVER_BG = DARK["ADD_FOLDER_HOVER_BG"]
+KEY_BADGE_BG = DARK["KEY_BADGE_BG"]
+KEY_BADGE_BORDER = DARK["KEY_BADGE_BORDER"]
 VERDICT_COLORS = {
     "favorite": GREEN,
     "trash": RED,
     "maybe": AMBER,
     "round2": BLUE,
 }
+VERDICT_BG = DARK_VERDICT_BG
 
-VERDICT_BG = {
-    "favorite": "#18261f",
-    "trash": "#281a1d",
-    "maybe": "#262013",
-    "round2": "#17202e",
-}
+CURRENT_THEME = "dark"
 
 
 def _font(
@@ -80,7 +171,7 @@ def apply_theme(app: QApplication) -> None:
     app.setStyleSheet(STYLESHEET)
 
 
-STYLESHEET = f"""
+_DARK_STYLESHEET = f"""
 * {{
     outline: none;
 }}
@@ -501,3 +592,65 @@ QGraphicsView {{
     background: transparent;
 }}
 """
+
+
+# Replace both palette tokens and the handful of literals embedded directly in
+# the stylesheet. Keeping this map next to the QSS makes the two themes easy to
+# audit: every dark color has an explicit light counterpart.
+_QSS_LITERAL_LIGHT = {
+    "#4b3a1c": "#d9bd83",
+    "#171a1f": "#e7e1d4",
+    "#15181c": "#efeade",
+    "#21252b": "#ded7c8",
+    "#1b1507": "#2b1c07",
+    "#d9a743": "#a9650d",
+    "#5a2b31": "#d6a2a7",
+    "#341e22": "#f2d7da",
+    "#69552b": "#d6b06a",
+    "#573038": "#e0aeb3",
+    "#341d22": "#f5dadd",
+    "#7f414b": "#c47a83",
+    "#4e3d1e": "#ddc48e",
+    "#302715": "#f7ead0",
+    "#77602e": "#c59a47",
+    "#2d405c": "#b6c8e2",
+    "#1c2637": "#e9f0fa",
+    "#45628e": "#8aa9ce",
+    "#2e513c": "#a9c9b4",
+    "#1a3024": "#e5f4ea",
+    "#467a58": "#7fae8f",
+    "#5d4a23": "#d6b06a",
+    "#111317": "#f2ede3",
+    "#20242b": "#ded7c8",
+    "#6f5a2e": "#b58b3a",
+    "#262b33": "#e4ddcf",
+    "#30363f": "#cfc6b5",
+    "#414954": "#b8ad99",
+}
+
+_LIGHT_STYLESHEET = _DARK_STYLESHEET
+for _dark_value, _light_value in {
+    **{DARK[key]: LIGHT[key] for key in DARK},
+    **_QSS_LITERAL_LIGHT,
+}.items():
+    _LIGHT_STYLESHEET = _LIGHT_STYLESHEET.replace(_dark_value, _light_value)
+
+STYLESHEET = _DARK_STYLESHEET
+
+
+def set_theme(name: str) -> None:
+    """Activate a palette for subsequently constructed widgets."""
+    global CURRENT_THEME, STYLESHEET
+    CURRENT_THEME = "light" if name == "light" else "dark"
+    palette = LIGHT if CURRENT_THEME == "light" else DARK
+    globals().update(palette)
+    globals()["VERDICT_COLORS"] = {
+        "favorite": palette["GREEN"],
+        "trash": palette["RED"],
+        "maybe": palette["AMBER"],
+        "round2": palette["BLUE"],
+    }
+    globals()["VERDICT_BG"] = (
+        LIGHT_VERDICT_BG if CURRENT_THEME == "light" else DARK_VERDICT_BG
+    )
+    STYLESHEET = _LIGHT_STYLESHEET if CURRENT_THEME == "light" else _DARK_STYLESHEET

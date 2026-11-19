@@ -37,7 +37,7 @@ _ACTION_HINTS = {
     "rotateCw": "Rotate 90° clockwise",
     "rotateCcw": "Rotate 90° counterclockwise",
     "resetView": "Fit to window and reset rotation",
-    "fullscreen": "Toggle fullscreen",
+    "fullscreen": "Hide the interface; Esc or F exits",
     "help": "Show shortcuts and tips",
 }
 

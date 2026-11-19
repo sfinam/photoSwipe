@@ -21,6 +21,8 @@ Um **aplicativo de desktop** rápido para selecionar fotos: percorra uma pasta, 
 ## Recursos
 
 - **Idiomas da interface:** inglês, russo e português (Brasil). Escolha em **Configurações → Geral** ou pelo botão de globo no cabeçalho da Biblioteca.
+- **Temas escuro e claro:** escolha em **Configurações → Geral → Aparência**.
+- **Tela cheia imersiva:** oculta tudo, exceto o botão de sair, mantendo todos os atalhos de teclado e controle funcionando.
 - **Modo portátil no Windows:** mantenha configurações, sessões e cache ao lado do executável em um pendrive.
 - Revisão em janela cheia com uma interface escura e sem distrações.
 - Quatro decisões: **Favorito**, **Lixeira**, **Talvez** e **Segunda rodada**.
@@ -118,6 +120,12 @@ A segunda rodada não move arquivos: as fotos adiadas permanecem na pasta de ori
 
 Abra **Configurações → Geral** ou clique no botão de globo no cabeçalho da Biblioteca. Depois de salvar, a janela reabre no novo idioma.
 
+### Tema
+
+Escolha **Configurações → Geral → Aparência → Tema** entre **Escuro** e **Claro**. A opção é salva e a janela reabre com a nova paleta. Os dois temas usam o mesmo layout, os mesmos atalhos e as mesmas pastas de destino.
+
+![Tema claro](docs/screenshots/en/light.png)
+
 ![Configurações de idioma](docs/screenshots/pt/language.png)
 
 A interface, os diálogos, as datas, as mensagens de erro, a ajuda dos atalhos e esta documentação estão disponíveis em inglês, russo e português do Brasil. Nomes de arquivos, pastas e valores técnicos de EXIF nunca são traduzidos.
@@ -136,12 +144,21 @@ A interface, os diálogos, as datas, as mensagens de erro, a ajuda dos atalhos e
 | Aproximar / afastar | `+` / `−` |
 | Girar à direita / à esquerda | `R` / `Shift + R` |
 | Redefinir visualização | `0` |
-| Tela cheia | `F` |
+| Tela cheia imersiva | `F` |
 | Ajuda | `?` ou `F1` |
 | Voltar à biblioteca | `Esc` |
 | Sair | `Ctrl + Q` |
 
 As setas funcionam em qualquer layout, inclusive no russo. Todas as combinações podem ser alteradas em **Configurações → Atalhos**; até quatro variantes por ação. Conflitos são verificados no momento da atribuição.
+
+### Tela cheia imersiva
+
+Pressione `F` no modo de classificação ou de comparação. O PhotoSwipe oculta o cabeçalho, a barra de ações, os controles de comparação e todo o restante da interface. Ficam apenas a área da foto e um pequeno botão **Sair da tela cheia** no canto superior direito.
+
+- Todos os atalhos continuam funcionando: decisões, desfazer, escolhas de comparação, pulo de uma foto, exibição RAW, zoom, rotação e botões do controle.
+- `Esc` ou `F` saem da tela cheia.
+- Quando a fila ou a comparação termina, o aplicativo sai da tela cheia automaticamente para mostrar a tela de conclusão.
+- Avisos rotineiros são ocultados nesse modo; erros continuam sendo exibidos.
 
 ### Deslizes
 
@@ -261,7 +278,7 @@ python -m unittest discover -s tests -t . -v
 python -m photoswipe
 ```
 
-Os testes usam os arquivos reais `A7309498.ARW` e `A7309498.JPG` na raiz do repositório: agrupamento, metadados, modos de exibição RAW, prévias, movimentação, sidecars, pulo de uma foto na comparação, limite de desfazer, segunda rodada, desfazer, troca de idioma, caminhos portáteis e inicialização da interface. A suíte tem 39 testes.
+Os testes usam os arquivos reais `A7309498.ARW` e `A7309498.JPG` na raiz do repositório: agrupamento, metadados, modos de exibição RAW, prévias, movimentação, sidecars, pulo de uma foto na comparação, limite de desfazer, segunda rodada, desfazer, troca de idioma, caminhos portáteis e inicialização da interface. A suíte tem 42 testes.
 
 ### Build autônomo
 

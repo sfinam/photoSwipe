@@ -421,6 +421,35 @@ class SettingsDialog(QDialog):
         note.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 8.8pt;")
         body.addWidget(note)
         layout.addWidget(panel)
+
+        layout.addWidget(
+            _title(
+                tr("Appearance"),
+                tr("Choose the interface theme. The window reopens after saving."),
+            )
+        )
+        theme_panel, theme_body = _panel()
+        theme_row = QHBoxLayout()
+        theme_label = QLabel(tr("Theme"))
+        theme_label.setStyleSheet(f"color: {theme.TEXT}; font-size: 9.5pt;")
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem(tr("Dark"), "dark")
+        self.theme_combo.addItem(tr("Light"), "light")
+        theme_index = self.theme_combo.findData(self.config.behavior.theme)
+        self.theme_combo.setCurrentIndex(theme_index if theme_index >= 0 else 0)
+        theme_row.addWidget(theme_label)
+        theme_row.addStretch(1)
+        theme_row.addWidget(self.theme_combo)
+        theme_body.addLayout(theme_row)
+        theme_note = QLabel(
+            tr(
+                "Light theme uses the same layout and keyboard shortcuts. The choice is saved with your other settings."
+            )
+        )
+        theme_note.setWordWrap(True)
+        theme_note.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 8.8pt;")
+        theme_body.addWidget(theme_note)
+        layout.addWidget(theme_panel)
         layout.addStretch(1)
         return self._scrollable(page)
 
@@ -977,6 +1006,7 @@ class SettingsDialog(QDialog):
             self.raw_view_combo.currentData() or "jpeg"
         )
         self.config.behavior.undo_limit = int(self.undo_limit_spin.value())
+        self.config.behavior.theme = str(self.theme_combo.currentData() or "dark")
         self.config.controller.enabled = self.controller_enabled.isChecked()
         self.config.controller.deadzone = self.deadzone_slider.value() / 100.0
         self.config.controller.vibration = self.vibration_check.isChecked()
