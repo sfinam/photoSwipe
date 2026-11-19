@@ -6,6 +6,6 @@ build/
 dist/
 .data/
 .data-*/
-.tmp/
+.tmp*/
 .pytest_cache/
 *.log

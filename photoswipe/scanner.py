@@ -13,6 +13,7 @@ import rawpy
 from PIL import ExifTags, Image
 
 from . import image_support  # noqa: F401  (registers HEIF/HEIC)
+from .i18n import tr
 from .formats import (
     IGNORED_DIR_NAMES,
     IMAGE_EXTENSIONS,
@@ -323,7 +324,7 @@ def scan_source(
 ) -> ScanResult:
     root = Path(source.path).expanduser().resolve()
     if not root.is_dir():
-        raise ValueError("Папка-источник не найдена")
+        raise ValueError(tr("Source folder not found"))
     ignored = destinations.ignored_scan_roots(source)
     raw_groups: dict[str, list[MediaVariant]] = {}
     sidecar_files: list[MediaVariant] = []

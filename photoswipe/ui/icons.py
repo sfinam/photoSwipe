@@ -34,6 +34,7 @@ _PATHS: dict[str, str] = {
     "image": '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m21 16-4.5-4.5L7 21"/>',
     "alert": '<path d="M10.3 3.7 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.7a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
     "sparkles": '<path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5Z"/><path d="M19 15l.7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7Z"/><path d="M5 3l.6 1.8L7.5 5l-1.9.6L5 7.5l-.6-1.9L2.5 5l1.9-.2Z"/>',
+    "globe": '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/>',
     "gamepad": '<path d="M7.5 7h9a5.5 5.5 0 0 1 5.4 6.6l-.6 3A3 3 0 0 1 16 18.4L14.5 17h-5L8 18.4a3 3 0 0 1-5.3-1.8l-.6-3A5.5 5.5 0 0 1 7.5 7Z"/><path d="M8 11v4"/><path d="M6 13h4"/><path d="M16.5 12h.01"/><path d="M18.5 14h.01"/>',
     "keyboard": '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/><path d="M18 10h.01"/><path d="M7 14h10"/>',
     "external": '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',

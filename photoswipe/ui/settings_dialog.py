@@ -39,8 +39,9 @@ from ..config import (
     canonical_combo,
 )
 from ..controller import ControllerManager, button_choices, button_label
+from ..i18n import LANGUAGES, default_folder_names, tr
 from ..paths import config_file, data_dir
-from ..shortcuts import ACTION_HINTS, ACTION_LABELS, display_combo, event_to_combo
+from ..shortcuts import action_hint, action_label, display_combo, event_to_combo
 from ..utils import format_bytes, reveal_in_file_manager
 from . import theme
 from .widgets import HLine
@@ -74,17 +75,17 @@ def _panel() -> tuple[QFrame, QVBoxLayout]:
 class KeyCaptureDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Новая комбинация")
+        self.setWindowTitle(tr("New shortcut"))
         self.setModal(True)
         self.setMinimumWidth(430)
         self.combo: str | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 22)
         layout.setSpacing(11)
-        title = QLabel("Нажмите комбинацию клавиш")
+        title = QLabel(tr("Press a key combination"))
         title.setProperty("role", "h2")
         layout.addWidget(title)
-        hint = QLabel("Например, →, D, Shift + R или Ctrl + 1. Esc — отмена.")
+        hint = QLabel(tr("For example, →, D, Shift + R or Ctrl + 1. Esc cancels."))
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 9.2pt;")
         layout.addWidget(hint)
@@ -96,7 +97,7 @@ class KeyCaptureDialog(QDialog):
             f"border-radius: 11px; color: {theme.ACCENT}; font-size: 18pt; font-weight: 700;"
         )
         layout.addWidget(self.preview)
-        cancel = QPushButton("Отмена")
+        cancel = QPushButton(tr("Cancel"))
         cancel.setProperty("role", "ghost")
         cancel.clicked.connect(self.reject)
         row = QHBoxLayout()
@@ -147,9 +148,9 @@ class ShortcutRow(QWidget):
         text = QVBoxLayout()
         text.setContentsMargins(0, 0, 0, 0)
         text.setSpacing(0)
-        label = QLabel(ACTION_LABELS[action])
+        label = QLabel(action_label(action))
         label.setStyleSheet(f"color: {theme.TEXT}; font-size: 9.5pt; font-weight: 600;")
-        hint = QLabel(ACTION_HINTS.get(action, ""))
+        hint = QLabel(action_hint(action))
         hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.2pt;")
         text.addWidget(label)
         text.addWidget(hint)
@@ -160,7 +161,7 @@ class ShortcutRow(QWidget):
         self.add_button = QPushButton("＋")
         self.add_button.setProperty("role", "chip")
         self.add_button.setFixedWidth(30)
-        self.add_button.setToolTip("Добавить комбинацию")
+        self.add_button.setToolTip(tr("Add shortcut"))
         self.add_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_button.clicked.connect(self._add)
         layout.addWidget(self.add_button)
@@ -175,7 +176,7 @@ class ShortcutRow(QWidget):
                 item.widget().deleteLater()
         bindings = self.config.shortcuts.get(self.action, [])
         if not bindings:
-            empty = QLabel("не назначено")
+            empty = QLabel(tr("not assigned"))
             empty.setStyleSheet(
                 f"color: {theme.TEXT_DIM}; font-size: 8.6pt; font-style: italic;"
             )
@@ -184,7 +185,7 @@ class ShortcutRow(QWidget):
             chip = QPushButton(f"{display_combo(combo)}  ×")
             chip.setProperty("role", "chip")
             chip.setCursor(Qt.CursorShape.PointingHandCursor)
-            chip.setToolTip("Удалить комбинацию")
+            chip.setToolTip(tr("Remove shortcut"))
             chip.clicked.connect(lambda _=False, c=combo: self._remove(c))
             self.chips.addWidget(chip)
         self.add_button.setEnabled(len(bindings) < 4)
@@ -198,8 +199,12 @@ class ShortcutRow(QWidget):
         if owner is not None:
             QMessageBox.warning(
                 self,
-                "Комбинация уже занята",
-                f"{display_combo(combo)} уже используется для действия «{ACTION_LABELS[owner]}».",
+                tr("Shortcut already in use"),
+                tr(
+                    "{shortcut} is already used for “{action}”.",
+                    shortcut=display_combo(combo),
+                    action=action_label(owner),
+                ),
             )
             return
         self.config.shortcuts.setdefault(self.action, []).append(combo)
@@ -225,7 +230,7 @@ class ControllerRow(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(2, 5, 2, 5)
         layout.setSpacing(9)
-        label = QLabel(ACTION_LABELS[action])
+        label = QLabel(action_label(action))
         label.setStyleSheet(f"color: {theme.TEXT}; font-size: 9.5pt; font-weight: 600;")
         layout.addWidget(label, 1)
         self.chips = QHBoxLayout()
@@ -235,7 +240,7 @@ class ControllerRow(QWidget):
         self.add_button.setProperty("role", "chip")
         self.add_button.setFixedWidth(30)
         self.add_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.add_button.setToolTip("Назначить кнопку")
+        self.add_button.setToolTip(tr("Assign a button"))
         self.add_button.clicked.connect(self._menu)
         layout.addWidget(self.add_button)
         self._rebuild()
@@ -249,7 +254,7 @@ class ControllerRow(QWidget):
                 item.widget().deleteLater()
         values = self.config.controller.mappings.get(self.action, [])
         if not values:
-            empty = QLabel("не назначено")
+            empty = QLabel(tr("not assigned"))
             empty.setStyleSheet(
                 f"color: {theme.TEXT_DIM}; font-size: 8.6pt; font-style: italic;"
             )
@@ -258,7 +263,7 @@ class ControllerRow(QWidget):
             chip = QPushButton(f"{button_label(index)}  ×")
             chip.setProperty("role", "chip")
             chip.setCursor(Qt.CursorShape.PointingHandCursor)
-            chip.setToolTip("Удалить кнопку")
+            chip.setToolTip(tr("Remove button"))
             chip.clicked.connect(lambda _=False, i=index: self._remove(i))
             self.chips.addWidget(chip)
         self.add_button.setEnabled(len(values) < 4)
@@ -277,11 +282,11 @@ class ControllerRow(QWidget):
                 continue
             action = menu.addAction(name)
             if index in all_used:
-                action.setToolTip("Уже используется другим действием")
+                action.setToolTip(tr("Already used by another action"))
             action.triggered.connect(lambda _=False, i=index: self._add(i))
             any_added = True
         if not any_added:
-            action = menu.addAction("Все кнопки уже назначены")
+            action = menu.addAction(tr("All buttons are already assigned"))
             action.setEnabled(False)
         menu.exec(self.add_button.mapToGlobal(self.add_button.rect().bottomLeft()))
 
@@ -292,8 +297,12 @@ class ControllerRow(QWidget):
             ):
                 QMessageBox.warning(
                     self,
-                    "Кнопка уже занята",
-                    f"{button_label(index)} уже назначена для действия «{ACTION_LABELS[other]}».",
+                    tr("Button already in use"),
+                    tr(
+                        "{button} is already assigned to “{action}”.",
+                        button=button_label(index),
+                        action=action_label(other),
+                    ),
                 )
                 return
         values = self.config.controller.mappings.setdefault(self.action, [])
@@ -322,7 +331,7 @@ class SettingsDialog(QDialog):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Настройки — PhotoSwipe")
+        self.setWindowTitle(tr("Settings — PhotoSwipe"))
         self.setModal(True)
         self.resize(880, 700)
         self.setMinimumSize(760, 600)
@@ -337,7 +346,7 @@ class SettingsDialog(QDialog):
         root.setContentsMargins(22, 18, 22, 16)
         root.setSpacing(13)
         header = QHBoxLayout()
-        title = QLabel("Настройки")
+        title = QLabel(tr("Settings"))
         title.setStyleSheet(f"color: {theme.TEXT}; font-size: 19pt; font-weight: 750;")
         header.addWidget(title)
         header.addStretch(1)
@@ -347,20 +356,21 @@ class SettingsDialog(QDialog):
         root.addLayout(header)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_folders_tab(), "Папки")
-        self.tabs.addTab(self._build_behavior_tab(), "Поведение")
-        self.tabs.addTab(self._build_shortcuts_tab(), "Клавиши")
-        self.tabs.addTab(self._build_controller_tab(), "Контроллер")
-        self.tabs.addTab(self._build_about_tab(), "RAW и кэш")
+        self.tabs.addTab(self._build_general_tab(), tr("General"))
+        self.tabs.addTab(self._build_folders_tab(), tr("Folders"))
+        self.tabs.addTab(self._build_behavior_tab(), tr("Behavior"))
+        self.tabs.addTab(self._build_shortcuts_tab(), tr("Shortcuts"))
+        self.tabs.addTab(self._build_controller_tab(), tr("Controller"))
+        self.tabs.addTab(self._build_about_tab(), tr("RAW and cache"))
         root.addWidget(self.tabs, 1)
 
         footer = QHBoxLayout()
         footer.setSpacing(9)
         footer.addStretch(1)
-        cancel = QPushButton("Отмена")
+        cancel = QPushButton(tr("Cancel"))
         cancel.setProperty("role", "ghost")
         cancel.clicked.connect(self.reject)
-        save = QPushButton("Сохранить")
+        save = QPushButton(tr("Save"))
         save.setProperty("role", "primary")
         save.setCursor(Qt.CursorShape.PointingHandCursor)
         save.setMinimumWidth(110)
@@ -377,6 +387,42 @@ class SettingsDialog(QDialog):
         scroll.setWidget(content)
         return scroll
 
+    def _build_general_tab(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(18, 16, 18, 16)
+        layout.setSpacing(13)
+        layout.addWidget(
+            _title(
+                tr("Language"),
+                tr("Choose the interface language. The window reopens after saving."),
+            )
+        )
+        panel, body = _panel()
+        row = QHBoxLayout()
+        label = QLabel(tr("Interface language"))
+        label.setStyleSheet(f"color: {theme.TEXT}; font-size: 9.5pt;")
+        self.language_combo = QComboBox()
+        for code, name in LANGUAGES.items():
+            self.language_combo.addItem(name, code)
+        index = self.language_combo.findData(self.config.language)
+        self.language_combo.setCurrentIndex(index if index >= 0 else 0)
+        row.addWidget(label)
+        row.addStretch(1)
+        row.addWidget(self.language_combo)
+        body.addLayout(row)
+        note = QLabel(
+            tr(
+                "Folder names are stored as they are. Changing the language does not rename existing destination folders; edit them in the Folders tab."
+            )
+        )
+        note.setWordWrap(True)
+        note.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 8.8pt;")
+        body.addWidget(note)
+        layout.addWidget(panel)
+        layout.addStretch(1)
+        return self._scrollable(page)
+
     def _build_folders_tab(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
@@ -384,21 +430,23 @@ class SettingsDialog(QDialog):
         layout.setSpacing(13)
         layout.addWidget(
             _title(
-                "Куда перемещать фотографии",
-                "Файлы перемещаются сразу после решения. Папки создаются автоматически.",
+                tr("Where to move photos"),
+                tr(
+                    "Files are moved immediately after a decision. Folders are created automatically."
+                ),
             )
         )
         panel, body = _panel()
         dest = self.config.destinations
-        self.mode_beside = QRadioButton("Рядом с каждой папкой-источником")
-        self.mode_custom = QRadioButton("В общую папку")
+        self.mode_beside = QRadioButton(tr("Next to each source folder"))
+        self.mode_custom = QRadioButton(tr("Into a shared folder"))
         self.mode_beside.setChecked(dest.mode == "beside")
         self.mode_custom.setChecked(dest.mode == "custom")
         body.addWidget(self.mode_beside)
         self.beside_fields = QWidget()
         beside_row = QHBoxLayout(self.beside_fields)
         beside_row.setContentsMargins(25, 0, 0, 0)
-        beside_label = QLabel("Имя подпапки:")
+        beside_label = QLabel(tr("Subfolder name:"))
         beside_label.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 9.2pt;")
         self.beside_edit = QLineEdit(dest.beside_dir_name)
         self.beside_edit.setPlaceholderText("_PhotoSwipe")
@@ -413,13 +461,13 @@ class SettingsDialog(QDialog):
         custom_layout.setSpacing(7)
         custom_row = QHBoxLayout()
         self.custom_root_edit = QLineEdit(dest.custom_root)
-        self.custom_browse_button = QPushButton("Выбрать…")
+        self.custom_browse_button = QPushButton(tr("Choose…"))
         self.custom_browse_button.setProperty("role", "subtle")
         self.custom_browse_button.clicked.connect(self._choose_custom_root)
         custom_row.addWidget(self.custom_root_edit, 1)
         custom_row.addWidget(self.custom_browse_button)
         custom_layout.addLayout(custom_row)
-        self.add_source_name = QCheckBox("Добавлять подпапку с именем источника")
+        self.add_source_name = QCheckBox(tr("Add a subfolder with the source name"))
         self.add_source_name.setChecked(dest.add_source_name)
         custom_layout.addWidget(self.add_source_name)
         body.addWidget(self.custom_fields)
@@ -433,14 +481,17 @@ class SettingsDialog(QDialog):
         layout.addWidget(panel)
 
         layout.addWidget(
-            _title("Названия папок", "Можно переименовать под свои задачи.")
+            _title(
+                tr("Folder names"),
+                tr("You can rename them to suit your workflow."),
+            )
         )
         panel2, body2 = _panel()
         grid = QHBoxLayout()
         for label_text, attr in (
-            ("Избранное", "favorite"),
-            ("Корзина", "trash"),
-            ("Может быть", "maybe"),
+            (tr("Favorites"), "favorite"),
+            (tr("Trash"), "trash"),
+            (tr("Maybe"), "maybe"),
         ):
             column = QVBoxLayout()
             label = QLabel(label_text)
@@ -452,8 +503,9 @@ class SettingsDialog(QDialog):
             grid.addLayout(column, 1)
         body2.addLayout(grid)
         hint = QLabel(
-            "Второй раунд не перемещает файлы: отложенные фотографии остаются на месте, "
-            "пока вы не примете окончательное решение."
+            tr(
+                "The second round does not move files: deferred photos stay in place until you make a final decision."
+            )
         )
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.7pt;")
@@ -480,7 +532,7 @@ class SettingsDialog(QDialog):
         self.beside_fields.setVisible(not custom)
         self.custom_fields.setVisible(custom)
         source = self.current_source
-        source_name = source.name if source else "Фото"
+        source_name = source.name if source else tr("Photo")
         custom_root = Path(
             self.custom_root_edit.text().strip()
             or Path.home() / "Pictures" / "PhotoSwipe"
@@ -492,19 +544,24 @@ class SettingsDialog(QDialog):
                 else custom_root
             )
         else:
-            base = (Path(source.path) if source else Path("/фото")) / (
+            base = (Path(source.path) if source else Path("/photo")) / (
                 self.beside_edit.text().strip() or "_PhotoSwipe"
             )
+        defaults = default_folder_names(self.config.language)
         self.path_preview.setText(
-            f"Пример: {base / (self.favorite_edit.text().strip() or 'Избранное')}  ·  "
-            f"{base / (self.trash_edit.text().strip() or 'Корзина')}  ·  "
-            f"{base / (self.maybe_edit.text().strip() or 'Может быть')}"
+            tr(
+                "Example: {favorite}  ·  {trash}  ·  {maybe}",
+                favorite=base
+                / (self.favorite_edit.text().strip() or defaults["favorite"]),
+                trash=base / (self.trash_edit.text().strip() or defaults["trash"]),
+                maybe=base / (self.maybe_edit.text().strip() or defaults["maybe"]),
+            )
         )
 
     def _choose_custom_root(self) -> None:
         initial = self.custom_root_edit.text().strip() or str(Path.home() / "Pictures")
         folder = QFileDialog.getExistingDirectory(
-            self, "Куда складывать результаты", initial
+            self, tr("Choose destination folder"), initial
         )
         if folder:
             self.custom_root_edit.setText(folder)
@@ -516,17 +573,19 @@ class SettingsDialog(QDialog):
         layout.setSpacing(13)
         layout.addWidget(
             _title(
-                "Сортировка",
-                "Порядок и подпапки применяются при следующем открытии папки.",
+                tr("Sorting"),
+                tr(
+                    "Order and subfolder scanning are applied the next time a folder is opened."
+                ),
             )
         )
         panel, body = _panel()
         row = QHBoxLayout()
-        label = QLabel("Порядок фотографий")
+        label = QLabel(tr("Photo order"))
         label.setStyleSheet(f"color: {theme.TEXT}; font-size: 9.5pt;")
         self.sort_combo = QComboBox()
-        self.sort_combo.addItem("По дате съёмки", "date")
-        self.sort_combo.addItem("По имени файла", "name")
+        self.sort_combo.addItem(tr("By capture date"), "date")
+        self.sort_combo.addItem(tr("By file name"), "name")
         self.sort_combo.setCurrentIndex(
             1 if self.config.behavior.sort_by == "name" else 0
         )
@@ -535,19 +594,20 @@ class SettingsDialog(QDialog):
         row.addWidget(self.sort_combo)
         body.addLayout(row)
         body.addWidget(HLine())
-        self.recursive_check = QCheckBox("По умолчанию сканировать подпапки")
+        self.recursive_check = QCheckBox(tr("Scan subfolders by default"))
         self.recursive_check.setChecked(self.config.behavior.recursive_default)
         body.addWidget(self.recursive_check)
         layout.addWidget(panel)
 
-        layout.addWidget(_title("RAW", "На качество и скорость просмотра."))
+        layout.addWidget(_title(tr("RAW"), tr("Affects viewing quality and speed.")))
         panel2, body2 = _panel()
-        self.full_raw_check = QCheckBox("Полностью декодировать RAW при просмотре")
+        self.full_raw_check = QCheckBox(tr("Fully decode RAW when viewing"))
         self.full_raw_check.setChecked(self.config.behavior.raw_full_decode)
         body2.addWidget(self.full_raw_check)
         hint = QLabel(
-            "По умолчанию PhotoSwipe показывает встроенное JPEG-превью камеры — это быстро и достаточно "
-            "для отбора. Полное декодирование через LibRaw даёт больше деталей, но заметно медленнее."
+            tr(
+                "By default PhotoSwipe shows the camera’s embedded JPEG preview — it is fast and good enough for culling. Full LibRaw decoding gives more detail but is noticeably slower."
+            )
         )
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 8.8pt;")
@@ -564,12 +624,12 @@ class SettingsDialog(QDialog):
         header = QHBoxLayout()
         header.addWidget(
             _title(
-                "Горячие клавиши",
-                "Нажмите ＋, затем нужную комбинацию. До четырёх вариантов на действие.",
+                tr("Shortcuts"),
+                tr("Press +, then the combination. Up to four variants per action."),
             ),
             1,
         )
-        reset = QPushButton("Сбросить все")
+        reset = QPushButton(tr("Reset all"))
         reset.setProperty("role", "subtle")
         reset.clicked.connect(self._reset_shortcuts)
         header.addWidget(reset, 0, Qt.AlignmentFlag.AlignBottom)
@@ -589,8 +649,9 @@ class SettingsDialog(QDialog):
                 body.addWidget(HLine())
         layout.addWidget(panel)
         note = QLabel(
-            "Стрелки работают на любой раскладке, включая русскую. В режиме сравнения ←/→ выбирают "
-            "левую или правую фотографию, Пробел оставляет обе, S откладывает пару, Esc выходит."
+            tr(
+                "Arrow keys work in any layout, including Russian. In comparison mode ←/→ choose the left or right photo, Space keeps both, S defers the pair and Esc exits."
+            )
         )
         note.setWordWrap(True)
         note.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.7pt;")
@@ -608,8 +669,8 @@ class SettingsDialog(QDialog):
         if (
             QMessageBox.question(
                 self,
-                "Сбросить горячие клавиши",
-                "Вернуть стандартные комбинации для всех действий?",
+                tr("Reset shortcuts"),
+                tr("Restore the default shortcuts for all actions?"),
             )
             != QMessageBox.StandardButton.Yes
         ):
@@ -627,13 +688,15 @@ class SettingsDialog(QDialog):
         layout.setSpacing(13)
         layout.addWidget(
             _title(
-                "Геймпад",
-                "Подключите контроллер до запуска. В сравнении также работают D-pad ←/→, A и B.",
+                tr("Gamepad"),
+                tr(
+                    "Connect a controller before starting. In comparison mode, D-pad ←/→, A and B also work."
+                ),
             )
         )
         panel, body = _panel()
         top = QHBoxLayout()
-        self.controller_enabled = QCheckBox("Включить управление с контроллера")
+        self.controller_enabled = QCheckBox(tr("Enable controller input"))
         self.controller_enabled.setChecked(self.config.controller.enabled)
         top.addWidget(self.controller_enabled)
         top.addStretch(1)
@@ -641,23 +704,25 @@ class SettingsDialog(QDialog):
         top.addWidget(self.controller_status)
         body.addLayout(top)
         if self.controller is not None and self.controller.is_connected:
-            self.controller_status.setText(f"Подключён: {self.controller.name}")
+            self.controller_status.setText(
+                tr("Connected: {name}", name=self.controller.name)
+            )
             self.controller_status.setStyleSheet(
                 f"color: {theme.GREEN}; font-size: 8.8pt;"
             )
         elif self.controller is not None and self.controller.available:
-            self.controller_status.setText("Контроллер не найден")
+            self.controller_status.setText(tr("Controller not found"))
             self.controller_status.setStyleSheet(
                 f"color: {theme.TEXT_DIM}; font-size: 8.8pt;"
             )
         else:
-            self.controller_status.setText("Модуль pygame недоступен")
+            self.controller_status.setText(tr("pygame module unavailable"))
             self.controller_status.setStyleSheet(
                 f"color: {theme.AMBER}; font-size: 8.8pt;"
             )
 
         dead_row = QHBoxLayout()
-        dead_label = QLabel("Мёртвая зона стиков")
+        dead_label = QLabel(tr("Stick dead zone"))
         dead_label.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 9pt;")
         self.deadzone_slider = QSlider(Qt.Orientation.Horizontal)
         self.deadzone_slider.setRange(0, 80)
@@ -674,13 +739,16 @@ class SettingsDialog(QDialog):
         dead_row.addWidget(self.deadzone_slider, 1)
         dead_row.addWidget(self.deadzone_value)
         body.addLayout(dead_row)
-        self.vibration_check = QCheckBox("Виброотклик при решении")
+        self.vibration_check = QCheckBox(tr("Vibration feedback on decisions"))
         self.vibration_check.setChecked(self.config.controller.vibration)
         body.addWidget(self.vibration_check)
         layout.addWidget(panel)
 
         layout.addWidget(
-            _title("Кнопки", "Нажмите ＋, чтобы выбрать кнопку для действия.")
+            _title(
+                tr("Buttons"),
+                tr("Press + to choose a button for an action."),
+            )
         )
         panel2, body2 = _panel()
         self.controller_rows: list[ControllerRow] = []
@@ -691,7 +759,7 @@ class SettingsDialog(QDialog):
             if index < len(CONTROLLER_ACTIONS) - 1:
                 body2.addWidget(HLine())
         layout.addWidget(panel2)
-        reset = QPushButton("Сбросить раскладку контроллера")
+        reset = QPushButton(tr("Reset controller layout"))
         reset.setProperty("role", "subtle")
         reset.clicked.connect(self._reset_controller)
         layout.addWidget(reset, 0, Qt.AlignmentFlag.AlignLeft)
@@ -704,12 +772,12 @@ class SettingsDialog(QDialog):
 
     def _controller_status_changed(self, name: str) -> None:
         if name:
-            self.controller_status.setText(f"Подключён: {name}")
+            self.controller_status.setText(tr("Connected: {name}", name=name))
             self.controller_status.setStyleSheet(
                 f"color: {theme.GREEN}; font-size: 8.8pt;"
             )
         else:
-            self.controller_status.setText("Контроллер не найден")
+            self.controller_status.setText(tr("Controller not found"))
             self.controller_status.setStyleSheet(
                 f"color: {theme.TEXT_DIM}; font-size: 8.8pt;"
             )
@@ -725,8 +793,8 @@ class SettingsDialog(QDialog):
         if (
             QMessageBox.question(
                 self,
-                "Сбросить контроллер",
-                "Вернуть стандартную раскладку кнопок?",
+                tr("Reset controller"),
+                tr("Restore the default button layout?"),
             )
             != QMessageBox.StandardButton.Yes
         ):
@@ -743,7 +811,10 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(18, 16, 18, 16)
         layout.setSpacing(13)
         layout.addWidget(
-            _title("RAW-движок", "Sony ARW, DNG и другие форматы через LibRaw.")
+            _title(
+                tr("RAW engine"),
+                tr("Sony ARW, DNG and other formats via LibRaw."),
+            )
         )
         panel, body = _panel()
         self.cache_size_label = QLabel("")
@@ -754,8 +825,8 @@ class SettingsDialog(QDialog):
             f"rawpy / LibRaw: {rawpy.__version__}",
             f"Pillow: {PIL.__version__}",
             f"PySide6 / Qt: {PySide6.__version__}",
-            f"Данные: {data_dir()}",
-            f"Конфиг: {config_file()}",
+            tr("Data: {path}", path=data_dir()),
+            tr("Config: {path}", path=config_file()),
         ):
             label = QLabel(text)
             label.setWordWrap(True)
@@ -764,10 +835,10 @@ class SettingsDialog(QDialog):
         body.addWidget(HLine())
         row = QHBoxLayout()
         row.addWidget(self.cache_size_label, 1)
-        clear = QPushButton("Очистить кэш превью")
+        clear = QPushButton(tr("Clear preview cache"))
         clear.setProperty("role", "subtle")
         clear.clicked.connect(self._clear_cache)
-        open_data = QPushButton("Открыть папку данных")
+        open_data = QPushButton(tr("Open data folder"))
         open_data.setProperty("role", "subtle")
         open_data.clicked.connect(lambda: reveal_in_file_manager(data_dir()))
         row.addWidget(clear)
@@ -776,13 +847,15 @@ class SettingsDialog(QDialog):
         self._update_cache_size()
         layout.addWidget(panel)
 
-        layout.addWidget(_title("Поддерживаемые форматы"))
+        layout.addWidget(_title(tr("Supported formats")))
         panel2, body2 = _panel()
         formats = QLabel(
-            "RAW: Sony ARW / SRF / SR2, Adobe DNG, Canon CR2 / CR3, Nikon NEF / NRW, "
-            "Fujifilm RAF, Olympus ORF, Panasonic RW2, Pentax PEF, Samsung SRW, "
-            "Hasselblad 3FR, Leica RWL и другие форматы LibRaw.\n"
-            "Изображения: JPEG, PNG, TIFF, WebP, BMP, GIF, AVIF, HEIC/HEIF."
+            tr(
+                "RAW: Sony ARW / SRF / SR2, Adobe DNG, Canon CR2 / CR3, Nikon NEF / NRW, "
+                "Fujifilm RAF, Olympus ORF, Panasonic RW2, Pentax PEF, Samsung SRW, "
+                "Hasselblad 3FR, Leica RWL and other LibRaw formats.\n"
+                "Images: JPEG, PNG, TIFF, WebP, BMP, GIF, AVIF, HEIC/HEIF."
+            )
         )
         formats.setWordWrap(True)
         formats.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 9pt;")
@@ -796,14 +869,18 @@ class SettingsDialog(QDialog):
             size = self.preview_service.cache_size()
         except Exception:
             size = 0
-        self.cache_size_label.setText(f"Кэш превью: {format_bytes(size)}")
+        self.cache_size_label.setText(
+            tr("Preview cache: {size}", size=format_bytes(size))
+        )
 
     def _clear_cache(self) -> None:
         if (
             QMessageBox.question(
                 self,
-                "Очистить кэш",
-                "Удалить созданные превью? При следующем просмотре они будут созданы заново.",
+                tr("Clear cache"),
+                tr(
+                    "Delete generated previews? They will be recreated the next time you view the photos."
+                ),
             )
             != QMessageBox.StandardButton.Yes
         ):
@@ -836,16 +913,23 @@ class SettingsDialog(QDialog):
                     or any(ch in raw_value for ch in '<>:"/\\|?*')
                 ):
                     raise ValueError(
-                        "Имена папок не должны содержать спецсимволы и быть пустыми"
+                        tr(
+                            "Folder names must not be empty or contain special characters"
+                        )
                     )
             if dest.mode == "custom" and not dest.custom_root:
-                raise ValueError("Выберите общую папку для результатов")
+                raise ValueError(tr("Choose a shared folder for results"))
             dest.validate()
         except ValueError as error:
-            QMessageBox.warning(self, "Проверьте настройки", str(error))
+            QMessageBox.warning(self, tr("Check the settings"), str(error))
             return
 
-        self.config.destinations = Destinations.from_dict(dest.to_dict())
+        self.config.language = str(
+            self.language_combo.currentData() or self.config.language
+        )
+        self.config.destinations = Destinations.from_dict(
+            dest.to_dict(), self.config.language
+        )
         self.config.behavior.sort_by = (
             "name" if self.sort_combo.currentIndex() == 1 else "date"
         )

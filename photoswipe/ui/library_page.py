@@ -20,22 +20,22 @@ from PySide6.QtWidgets import (
 )
 
 from ..config import Config, Source
-from ..utils import format_count
+from ..i18n import LANGUAGES, current_language, tr
 from . import theme
 from .icons import brand_pixmap, icon
 from .widgets import BrandWidget, Card, IconButton, StatPill
 
 FEATURES = (
-    ("layers", "RAW + JPEG вместе", "Пара форматов обрабатывается как одна фотография"),
-    ("keyboard", "Свайпы, клавиши, геймпад", "Решения принимаются одним движением"),
-    ("compare", "Сравнение один на один", "Выберите лучший кадр из пары"),
-    ("rotate", "Зум и поворот", "Рассмотрите детали перед решением"),
+    ("layers", "RAW + JPEG together", "The format pair is treated as one photo"),
+    ("keyboard", "Swipes, keys, gamepad", "Make decisions in one motion"),
+    ("compare", "One-on-one comparison", "Pick the better shot from a pair"),
+    ("rotate", "Zoom and rotate", "Inspect the details before deciding"),
 )
 
 
 def _relative_time(value: str | None) -> str:
     if not value:
-        return "Ещё не открывали"
+        return tr("Not opened yet")
     try:
         moment = datetime.fromisoformat(value)
     except ValueError:
@@ -46,13 +46,13 @@ def _relative_time(value: str | None) -> str:
     delta = now - moment
     seconds = delta.total_seconds()
     if seconds < 60:
-        return "Только что"
+        return tr("Just now")
     if seconds < 3600:
-        return f"{int(seconds // 60)} мин назад"
+        return tr("{minutes} min ago", minutes=int(seconds // 60))
     if seconds < 86400 and moment.date() == now.date():
-        return f"Сегодня, {moment:%H:%M}"
+        return tr("Today, {time}", time=f"{moment:%H:%M}")
     if seconds < 172800:
-        return f"Вчера, {moment:%H:%M}"
+        return tr("Yesterday, {time}", time=f"{moment:%H:%M}")
     return moment.strftime("%d.%m.%Y")
 
 
@@ -208,7 +208,7 @@ class SourceCard(Card):
         title_box.addWidget(path)
         top.addLayout(title_box, 1)
 
-        menu_button = IconButton("more", "Действия с папкой", button_size=32, size=18)
+        menu_button = IconButton("more", tr("Folder actions"), button_size=32, size=18)
         menu_button.clicked.connect(self._show_menu)
         top.addWidget(menu_button, 0, Qt.AlignmentFlag.AlignTop)
         root.addLayout(top)
@@ -217,19 +217,19 @@ class SourceCard(Card):
         stats.setSpacing(6)
         counts = summary.get("stats", {})
         self.favorite_pill = StatPill(
-            "heart", theme.GREEN, counts.get("favorite", 0), "В избранном"
+            "heart", theme.GREEN, counts.get("favorite", 0), tr("Favorites")
         )
         self.trash_pill = StatPill(
-            "trash", theme.RED, counts.get("trash", 0), "В корзине"
+            "trash", theme.RED, counts.get("trash", 0), tr("Trash")
         )
         self.maybe_pill = StatPill(
-            "clock", theme.AMBER, counts.get("maybe", 0), "В «Может быть»"
+            "clock", theme.AMBER, counts.get("maybe", 0), tr("Maybe")
         )
         self.deferred_pill = StatPill(
             "clock",
             theme.BLUE,
             counts.get("round2", summary.get("deferred", 0)),
-            "На второй раунд",
+            tr("Second round"),
         )
         stats.addWidget(self.favorite_pill)
         stats.addWidget(self.trash_pill)
@@ -249,13 +249,13 @@ class SourceCard(Card):
         deferred = int(summary.get("deferred") or 0)
         if summary.get("has_session"):
             if total > 0 and processed >= total:
-                status_text = "Завершено"
+                status_text = tr("Complete")
             elif summary.get("mode") == "second":
-                status_text = f"Раунд 2 · осталось {remaining}"
+                status_text = tr("Round 2 · remaining {count}", count=remaining)
             else:
-                status_text = f"Осталось {remaining + deferred}"
+                status_text = tr("Remaining {count}", count=remaining + deferred)
         else:
-            status_text = "Готово к сортировке"
+            status_text = tr("Ready to sort")
         status = QLabel(status_text)
         status.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 8.8pt;")
         counter = QLabel(f"{processed} / {total}" if total else "")
@@ -282,17 +282,17 @@ class SourceCard(Card):
         when = QLabel(
             _relative_time(summary.get("updated_at"))
             if summary.get("has_session")
-            else "Ещё не открывали"
+            else tr("Not opened yet")
         )
         when.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.6pt;")
         footer.addWidget(when)
         footer.addStretch(1)
         if not source.exists:
-            missing = QLabel("Папка недоступна")
+            missing = QLabel(tr("Folder unavailable"))
             missing.setProperty("role", "warning")
             footer.addWidget(missing)
         start = QPushButton(
-            "Продолжить" if summary.get("has_session") else "Сортировать"
+            tr("Continue") if summary.get("has_session") else tr("Sort")
         )
         start.setProperty("role", "primary")
         start.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -312,18 +312,18 @@ class SourceCard(Card):
     def _show_menu(self) -> None:
         menu = QMenu(self)
         open_action = menu.addAction(
-            icon("folder", theme.TEXT_MUTED, 16), "Открыть папку"
+            icon("folder", theme.TEXT_MUTED, 16), tr("Open folder")
         )
         open_action.triggered.connect(
             lambda: self.menu_requested.emit(self.source.id, "reveal")
         )
         rename_action = menu.addAction(
-            icon("settings", theme.TEXT_MUTED, 16), "Переименовать"
+            icon("settings", theme.TEXT_MUTED, 16), tr("Rename")
         )
         rename_action.triggered.connect(
             lambda: self.menu_requested.emit(self.source.id, "rename")
         )
-        recursive_action = menu.addAction("Сканировать подпапки")
+        recursive_action = menu.addAction(tr("Scan subfolders"))
         recursive_action.setCheckable(True)
         recursive_action.setChecked(self.source.recursive)
         recursive_action.triggered.connect(
@@ -333,13 +333,13 @@ class SourceCard(Card):
         )
         menu.addSeparator()
         reset_action = menu.addAction(
-            icon("refresh", theme.AMBER, 16), "Сбросить прогресс"
+            icon("refresh", theme.AMBER, 16), tr("Reset progress")
         )
         reset_action.triggered.connect(
             lambda: self.menu_requested.emit(self.source.id, "reset")
         )
         remove_action = menu.addAction(
-            icon("trash", theme.RED, 16), "Убрать из библиотеки"
+            icon("trash", theme.RED, 16), tr("Remove from library")
         )
         remove_action.triggered.connect(
             lambda: self.menu_requested.emit(self.source.id, "remove")
@@ -370,9 +370,9 @@ class AddFolderCard(QFrame):
         )
         circle.setPixmap(icon("plus", theme.ACCENT, 24).pixmap(24, 24))
         layout.addWidget(circle, 0, Qt.AlignmentFlag.AlignHCenter)
-        title = QLabel("Добавить папку")
+        title = QLabel(tr("Add folder"))
         title.setStyleSheet(f"color: {theme.TEXT}; font-size: 11pt; font-weight: 600;")
-        subtitle = QLabel("Можно выбрать любую папку на диске")
+        subtitle = QLabel(tr("Choose any folder on disk"))
         subtitle.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 9pt;")
         layout.addWidget(title, 0, Qt.AlignmentFlag.AlignHCenter)
         layout.addWidget(subtitle, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -389,6 +389,7 @@ class LibraryPage(QWidget):
     settings_requested = Signal()
     help_requested = Signal()
     source_action = Signal(str, str)
+    language_requested = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -409,28 +410,39 @@ class LibraryPage(QWidget):
         header.setSpacing(12)
         header.addWidget(BrandWidget())
         header.addStretch(1)
+        self.language_button = IconButton(
+            "globe",
+            tr(
+                "Language: {language}",
+                language=LANGUAGES.get(current_language(), current_language()),
+            ),
+            button_size=38,
+            size=19,
+        )
+        self.language_button.clicked.connect(self._show_language_menu)
         self.controller_button = IconButton(
             "gamepad",
-            "Геймпад не подключён",
+            tr("Gamepad not connected"),
             color=theme.GREEN,
             button_size=38,
             size=20,
         )
         self.controller_button.hide()
         self.help_button = IconButton(
-            "help", "Справка и горячие клавиши", button_size=38, size=19
+            "help", tr("Help and shortcuts"), button_size=38, size=19
         )
         self.help_button.clicked.connect(self.help_requested)
         self.settings_button = IconButton(
-            "settings", "Настройки", button_size=38, size=19
+            "settings", tr("Settings"), button_size=38, size=19
         )
         self.settings_button.clicked.connect(self.settings_requested)
-        self.add_button = QPushButton("Добавить папку")
+        self.add_button = QPushButton(tr("Add folder"))
         self.add_button.setProperty("role", "primary")
         self.add_button.setIcon(icon("plus", "#1b1507", 16))
         self.add_button.setIconSize(QSize(16, 16))
         self.add_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_button.clicked.connect(self.add_requested)
+        header.addWidget(self.language_button)
         header.addWidget(self.controller_button)
         header.addWidget(self.help_button)
         header.addWidget(self.settings_button)
@@ -440,7 +452,7 @@ class LibraryPage(QWidget):
         title_row = QHBoxLayout()
         title_box = QVBoxLayout()
         title_box.setSpacing(2)
-        self.title = QLabel("Библиотека")
+        self.title = QLabel(tr("Library"))
         self.title.setProperty("role", "title")
         self.subtitle = QLabel("")
         self.subtitle.setProperty("role", "muted")
@@ -480,11 +492,11 @@ class LibraryPage(QWidget):
 
         footer = QHBoxLayout()
         footer.setSpacing(8)
-        local = QLabel("Локально · без облака · RAW + JPEG")
+        local = QLabel(tr("Local · no cloud · RAW + JPEG"))
         local.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.6pt;")
         footer.addWidget(local)
         footer.addStretch(1)
-        self.footer_link = QPushButton("Горячие клавиши")
+        self.footer_link = QPushButton(tr("Shortcuts"))
         self.footer_link.setProperty("role", "link")
         self.footer_link.setCursor(Qt.CursorShape.PointingHandCursor)
         self.footer_link.clicked.connect(self.help_requested)
@@ -505,19 +517,21 @@ class LibraryPage(QWidget):
         layout.setSpacing(24)
         left = QVBoxLayout()
         left.setSpacing(14)
-        eyebrow = QLabel("ФОТОРАЗБОР БЕЗ ЛИШНИХ КЛИКОВ")
+        eyebrow = QLabel(tr("PHOTO CULLING WITHOUT EXTRA CLICKS"))
         eyebrow.setStyleSheet(
             f"color: {theme.ACCENT}; font-size: 8.5pt; font-weight: 800; letter-spacing: 1.4px;"
         )
         left.addWidget(eyebrow)
-        heading = QLabel("Отберите лучшие\nкадры за один вечер")
+        heading = QLabel(tr("Pick the best\nshots in one evening"))
         heading.setStyleSheet(
             f"color: {theme.TEXT}; font-size: 27pt; font-weight: 750; line-height: 1.05;"
         )
         left.addWidget(heading)
         description = QLabel(
-            "Добавьте папку с фотографиями. Свайпайте, нажимайте стрелки или используйте геймпад — "
-            "файлы сами разложатся по папкам «Избранное», «Корзина» и «Может быть»."
+            tr(
+                "Add a folder with photos. Swipe, press the arrow keys or use a gamepad — "
+                "the files will be sorted into the Favorites, Trash and Maybe folders."
+            )
         )
         description.setWordWrap(True)
         description.setStyleSheet(
@@ -531,12 +545,12 @@ class LibraryPage(QWidget):
         features.setVerticalSpacing(14)
         for index, (icon_name, title, desc) in enumerate(FEATURES):
             features.addWidget(
-                FeatureRow(icon_name, title, desc), index // 2, index % 2
+                FeatureRow(icon_name, tr(title), tr(desc)), index // 2, index % 2
             )
         left.addLayout(features)
         left.addSpacing(2)
         actions = QHBoxLayout()
-        add = QPushButton("Добавить первую папку")
+        add = QPushButton(tr("Add your first folder"))
         add.setProperty("role", "primary")
         add.setIcon(icon("folder-plus", "#1b1507", 17))
         add.setIconSize(QSize(17, 17))
@@ -544,7 +558,7 @@ class LibraryPage(QWidget):
         add.clicked.connect(self.add_requested)
         add.setMinimumHeight(38)
         actions.addWidget(add)
-        hint = QLabel("Фото остаются на вашем компьютере")
+        hint = QLabel(tr("Your photos stay on your computer"))
         hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.8pt;")
         actions.addWidget(hint)
         actions.addStretch(1)
@@ -559,7 +573,7 @@ class LibraryPage(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(20, 16, 20, 17)
         layout.setSpacing(12)
-        heading = QLabel("Как это работает")
+        heading = QLabel(tr("How it works"))
         heading.setStyleSheet(
             f"color: {theme.TEXT}; font-size: 11pt; font-weight: 650;"
         )
@@ -570,20 +584,26 @@ class LibraryPage(QWidget):
             (
                 "01",
                 "folder-plus",
-                "Добавьте папку",
-                "Фотографии остаются на месте. RAW и JPEG с одинаковым именем склеиваются в одну карточку.",
+                tr("Add a folder"),
+                tr(
+                    "Photos stay where they are. RAW and JPEG files with the same name are merged into one card."
+                ),
             ),
             (
                 "02",
                 "keyboard",
-                "Принимайте решения",
-                "Стрелки, свайпы мышью, клавиши или геймпад. Z отменяет последнее действие.",
+                tr("Make decisions"),
+                tr(
+                    "Arrow keys, mouse swipes, shortcuts or a gamepad. Z undoes the last action."
+                ),
             ),
             (
                 "03",
                 "heart",
-                "Забирайте результат",
-                "Избранное и корзина раскладываются по папкам автоматически. Сомнительное уходит во второй раунд.",
+                tr("Collect the results"),
+                tr(
+                    "Favorites and trash are sorted into folders automatically. Uncertain shots go to the second round."
+                ),
             ),
         ):
             step = QHBoxLayout()
@@ -612,10 +632,24 @@ class LibraryPage(QWidget):
         layout.addLayout(steps)
         return panel
 
+    def _show_language_menu(self) -> None:
+        menu = QMenu(self)
+        current = current_language()
+        for code, label in LANGUAGES.items():
+            action = menu.addAction(label)
+            action.setCheckable(True)
+            action.setChecked(code == current)
+            action.triggered.connect(
+                lambda _=False, value=code: self.language_requested.emit(value)
+            )
+        menu.exec(QCursor.pos())
+
     # ------------------------------------------------------------------
     def set_controller(self, name: str) -> None:
         if name:
-            self.controller_button.setToolTip(f"Геймпад подключён: {name}")
+            self.controller_button.setToolTip(
+                tr("Gamepad connected: {name}", name=name)
+            )
             self.controller_button.show()
         else:
             self.controller_button.hide()
@@ -626,15 +660,20 @@ class LibraryPage(QWidget):
         total_processed = sum(
             int(item.get("processed", 0)) for item in summaries.values()
         )
-        processed_text = format_count(total_processed, "фото", "фото", "фото")
         if config.sources:
             self.subtitle.setText(
-                f"{format_count(len(config.sources), 'папка', 'папки', 'папок')} · {processed_text} уже разобрано"
+                tr(
+                    "Folders: {folders} · Photos sorted: {photos}",
+                    folders=len(config.sources),
+                    photos=total_processed,
+                )
             )
-            self.summary_label.setText(f"{processed_text} обработано")
+            self.summary_label.setText(
+                tr("Photos sorted: {count}", count=total_processed)
+            )
             self.summary_label.show()
         else:
-            self.subtitle.setText("Добавьте папку — и можно начинать")
+            self.subtitle.setText(tr("Add a folder to get started"))
             self.summary_label.hide()
         self.empty_panel.setVisible(not config.sources)
         self.cards_host.setVisible(bool(config.sources))

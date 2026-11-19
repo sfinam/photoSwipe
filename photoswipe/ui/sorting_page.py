@@ -18,10 +18,11 @@ from PySide6.QtWidgets import (
 )
 
 from ..config import Config
+from ..i18n import tr
 from ..models import PhotoGroup
 from ..session import SortSession
 from ..shortcuts import display_combo
-from ..utils import format_bytes, format_count
+from ..utils import format_bytes
 from . import theme
 from .icons import icon
 from .photo_view import PhotoView
@@ -124,7 +125,7 @@ class SortingPage(QWidget):
         top_row.setSpacing(11)
 
         self.back_button = IconButton(
-            "chevron-left", "К библиотеке (Esc)", button_size=38, size=21
+            "chevron-left", tr("Back to library (Esc)"), button_size=38, size=21
         )
         self.back_button.clicked.connect(self.back_requested)
         top_row.addWidget(self.back_button)
@@ -153,16 +154,16 @@ class SortingPage(QWidget):
         title_box.addWidget(self.folder_path)
         top_row.addLayout(title_box, 1)
 
-        self.favorite_pill = StatPill("heart", theme.GREEN, 0, "Избранное")
-        self.trash_pill = StatPill("trash", theme.RED, 0, "Корзина")
-        self.maybe_pill = StatPill("clock", theme.AMBER, 0, "Может быть")
-        self.deferred_pill = StatPill("clock", theme.BLUE, 0, "Второй раунд")
+        self.favorite_pill = StatPill("heart", theme.GREEN, 0, tr("Favorites"))
+        self.trash_pill = StatPill("trash", theme.RED, 0, tr("Trash"))
+        self.maybe_pill = StatPill("clock", theme.AMBER, 0, tr("Maybe"))
+        self.deferred_pill = StatPill("clock", theme.BLUE, 0, tr("Second round"))
         top_row.addWidget(self.favorite_pill)
         top_row.addWidget(self.trash_pill)
         top_row.addWidget(self.maybe_pill)
         top_row.addWidget(self.deferred_pill)
 
-        self.undo_button = QPushButton("Отменить")
+        self.undo_button = QPushButton(tr("Undo"))
         self.undo_button.setProperty("role", "subtle")
         self.undo_button.setIcon(icon("undo", theme.TEXT_MUTED, 16))
         self.undo_button.setIconSize(QSize(16, 16))
@@ -170,7 +171,7 @@ class SortingPage(QWidget):
         self.undo_button.clicked.connect(self.undo_requested)
         top_row.addWidget(self.undo_button)
 
-        self.compare_button = QPushButton("Сравнить")
+        self.compare_button = QPushButton(tr("Compare"))
         self.compare_button.setProperty("role", "subtle")
         self.compare_button.setIcon(icon("compare", theme.BLUE, 16))
         self.compare_button.setIconSize(QSize(16, 16))
@@ -178,14 +179,14 @@ class SortingPage(QWidget):
         self.compare_button.clicked.connect(self.compare_requested)
         top_row.addWidget(self.compare_button)
 
-        self.help_button = IconButton("help", "Справка", button_size=36, size=18)
+        self.help_button = IconButton("help", tr("Help"), button_size=36, size=18)
         self.help_button.clicked.connect(self.help_requested)
         self.settings_button = IconButton(
-            "settings", "Настройки", button_size=36, size=18
+            "settings", tr("Settings"), button_size=36, size=18
         )
         self.settings_button.clicked.connect(self.settings_requested)
         self.fullscreen_button = IconButton(
-            "maximize", "Полный экран (F)", button_size=36, size=18
+            "maximize", tr("Fullscreen (F)"), button_size=36, size=18
         )
         self.fullscreen_button.clicked.connect(self.fullscreen_requested)
         top_row.addWidget(self.help_button)
@@ -250,7 +251,7 @@ class SortingPage(QWidget):
             f"color: {theme.TEXT}; font-size: 15pt; font-weight: 700;"
         )
         self.format_badge = Badge("")
-        self.loading_badge = Badge("Загрузка…")
+        self.loading_badge = Badge(tr("Loading…"))
         self.loading_badge.setStyleSheet(
             f"color: {theme.BLUE}; background: {theme.BLUE_DARK}; border: 1px solid #2b405e;"
             "border-radius: 8px; padding: 2px 8px; font-size: 8.2pt;"
@@ -273,7 +274,7 @@ class SortingPage(QWidget):
         tools = QHBoxLayout()
         tools.setSpacing(2)
         self.zoom_out_button = IconButton(
-            "zoom-out", "Уменьшить", button_size=32, size=17
+            "zoom-out", tr("Zoom out"), button_size=32, size=17
         )
         self.zoom_out_button.clicked.connect(lambda: self.view.zoom_out())
         self.zoom_label = QLabel("100%")
@@ -281,19 +282,19 @@ class SortingPage(QWidget):
         self.zoom_label.setFixedWidth(46)
         self.zoom_label.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 8.8pt;")
         self.zoom_in_button = IconButton(
-            "zoom-in", "Увеличить", button_size=32, size=17
+            "zoom-in", tr("Zoom in"), button_size=32, size=17
         )
         self.zoom_in_button.clicked.connect(lambda: self.view.zoom_in())
         self.fit_button = IconButton(
-            "minimize", "Вписать в окно (0)", button_size=32, size=17
+            "minimize", tr("Fit to window (0)"), button_size=32, size=17
         )
         self.fit_button.clicked.connect(lambda: self.view.fit_to_window())
         self.rotate_ccw_button = IconButton(
-            "rotate-ccw", "Повернуть влево", button_size=32, size=17
+            "rotate-ccw", tr("Rotate left"), button_size=32, size=17
         )
         self.rotate_ccw_button.clicked.connect(lambda: self.view.rotate_ccw())
         self.rotate_cw_button = IconButton(
-            "rotate-cw", "Повернуть вправо", button_size=32, size=17
+            "rotate-cw", tr("Rotate right"), button_size=32, size=17
         )
         self.rotate_cw_button.clicked.connect(lambda: self.view.rotate_cw())
         tools.addWidget(self.zoom_out_button)
@@ -334,13 +335,13 @@ class SortingPage(QWidget):
         bar = QHBoxLayout(self.action_bar)
         bar.setContentsMargins(0, 0, 0, 0)
         bar.setSpacing(10)
-        self.trash_button = DecisionButton("trash", "В корзину", "trash", theme.RED)
-        self.maybe_button = DecisionButton("maybe", "Может быть", "clock", theme.AMBER)
+        self.trash_button = DecisionButton("trash", tr("Trash"), "trash", theme.RED)
+        self.maybe_button = DecisionButton("maybe", tr("Maybe"), "clock", theme.AMBER)
         self.round2_button = DecisionButton(
-            "round2", "Второй раунд", "clock", theme.BLUE
+            "round2", tr("Second round"), "clock", theme.BLUE
         )
         self.favorite_button = DecisionButton(
-            "favorite", "В избранное", "heart", theme.GREEN
+            "favorite", tr("Favorite"), "heart", theme.GREEN
         )
         for button in (
             self.trash_button,
@@ -363,7 +364,7 @@ class SortingPage(QWidget):
     def set_controller(self, name: str) -> None:
         if name:
             short = name if len(name) <= 32 else name[:30] + "…"
-            self.controller_label.setText(f"Геймпад · {short}")
+            self.controller_label.setText(tr("Gamepad · {name}", name=short))
             self.controller_label.setToolTip(name)
             self.controller_label.show()
         else:
@@ -381,17 +382,17 @@ class SortingPage(QWidget):
             button.setToolTip(" / ".join(display_combo(b) for b in bindings))
         undo = self.config.shortcuts.get("undo", [])
         self.undo_button.setToolTip(
-            "Отменить последнее решение"
+            tr("Undo the last decision")
             + (f" ({display_combo(undo[0])})" if undo else "")
         )
         compare = self.config.shortcuts.get("compare", [])
         self.compare_button.setToolTip(
-            "Сравнить две фотографии"
+            tr("Compare two photos")
             + (f" ({display_combo(compare[0])})" if compare else "")
         )
         full = self.config.shortcuts.get("fullscreen", [])
         self.fullscreen_button.setToolTip(
-            "Полный экран" + (f" ({display_combo(full[0])})" if full else "")
+            tr("Fullscreen") + (f" ({display_combo(full[0])})" if full else "")
         )
 
     # ------------------------------------------------------------------
@@ -406,7 +407,7 @@ class SortingPage(QWidget):
         self.folder_path.setToolTip(session.source.path)
         self.round_badge.setVisible(session.mode == "second")
         if session.mode == "second":
-            self.round_badge.setText(f"РАУНД {session.round_number}")
+            self.round_badge.setText(tr("ROUND {number}", number=session.round_number))
         self.refresh(force=True)
 
     def clear(self) -> None:
@@ -425,9 +426,9 @@ class SortingPage(QWidget):
             can_decide and bool(self.session and self.session.mode == "first")
         )
         if self.session and self.session.mode == "second":
-            self.round2_button.set_hint("Второй раунд уже идёт")
+            self.round2_button.set_hint(tr("Second round is already running"))
         else:
-            self.round2_button.set_hint("нажмите или свайпните")
+            self.round2_button.set_hint(tr("click or swipe"))
         self.undo_button.setEnabled(
             not busy and bool(self.session and self.session.can_undo)
         )
@@ -466,7 +467,9 @@ class SortingPage(QWidget):
             self._build_variant_chips(current)
             self._update_photo_info(current)
             self.view.clear()
-            self.view.set_loading(f"Открываю {current.variants[choice].label}…")
+            self.view.set_loading(
+                tr("Opening {format}…", format=current.variants[choice].label)
+            )
             self._load_preview(current, choice)
         elif variant_changed or force:
             self.variant_index = choice
@@ -493,17 +496,23 @@ class SortingPage(QWidget):
         total = session.total
         self.progress.setRange(0, max(1, total))
         self.progress.setValue(min(session.processed, total) if total else 0)
-        self.progress_label.setText(f"{session.processed} из {total}" if total else "")
+        self.progress_label.setText(
+            tr("{processed} of {total}", processed=session.processed, total=total)
+            if total
+            else ""
+        )
         if session.mode == "second":
             self.round_badge.setVisible(True)
-            self.round_badge.setText(f"РАУНД {session.round_number}")
+            self.round_badge.setText(tr("ROUND {number}", number=session.round_number))
             self.deferred_label.setText(
-                f"Осталось в раунде: {len(session.queue)}" if session.queue else ""
+                tr("In this round: {count}", count=len(session.queue))
+                if session.queue
+                else ""
             )
         else:
             self.round_badge.hide()
             self.deferred_label.setText(
-                f"На второй раунд: {session.deferred_count}"
+                tr("Second round: {count}", count=session.deferred_count)
                 if session.deferred_count
                 else ""
             )
@@ -602,16 +611,19 @@ class SortingPage(QWidget):
         self.loading_badge.hide()
         if error or not path:
             self.view.set_error(
-                f"Не удалось открыть {group.variants[variant_index].label}"
+                tr(
+                    "Could not open {format}",
+                    format=group.variants[variant_index].label,
+                )
             )
             self.error_occurred.emit(f"{group.primary.name}: {error}")
             self.set_busy(self._busy)
             return
         pixmap = QPixmap(path)
         if pixmap.isNull():
-            self.view.set_error("Не удалось загрузить превью")
+            self.view.set_error(tr("Could not load preview"))
             self.error_occurred.emit(
-                f"Не удалось загрузить превью {group.primary.name}"
+                tr("Could not load preview: {name}", name=group.primary.name)
             )
             self.set_busy(self._busy)
             return
@@ -724,10 +736,10 @@ class SortingPage(QWidget):
             or session.deferred_count > 0
         )
         if not has_photos:
-            title = "В папке нет фотографий"
-            subtitle = (
-                "PhotoSwipe поддерживает JPEG, PNG, TIFF, WebP и RAW: Sony ARW, DNG, "
-                "Canon CR2/CR3, Nikon NEF, Fujifilm RAF и другие форматы LibRaw."
+            title = tr("No photos in this folder")
+            subtitle = tr(
+                "PhotoSwipe supports JPEG, PNG, TIFF, WebP and RAW: Sony ARW, DNG, "
+                "Canon CR2/CR3, Nikon NEF, Fujifilm RAF and other LibRaw formats."
             )
             icon_name = "image"
             accent = theme.TEXT_MUTED
@@ -736,25 +748,27 @@ class SortingPage(QWidget):
             and not session.queue
             and session.first_round_pending
         ):
-            title = "Второй раунд пройден"
-            subtitle = (
-                f"В папке появились новые фотографии: {len(session.first_round_pending)}. "
-                "Можно вернуться к первому раунду и разобрать их."
+            title = tr("Second round complete")
+            subtitle = tr(
+                "New photos appeared in this folder: {count}. "
+                "Return to the first round to sort them.",
+                count=len(session.first_round_pending),
             )
             icon_name = "refresh"
             accent = theme.BLUE
         elif session.mode == "first" and session.deferred_count:
-            title = "Первый раунд пройден"
-            subtitle = (
-                f"Отложено {format_count(session.deferred_count, 'фотография', 'фотографии', 'фотографий')}. "
-                "Второй раунд покажет только их — решение можно принять спокойнее."
+            title = tr("First round complete")
+            subtitle = tr(
+                "Deferred: {count}. The second round will show only these photos — "
+                "you can take a calmer look.",
+                count=session.deferred_count,
             )
             icon_name = "clock"
             accent = theme.BLUE
         else:
-            title = "Готово"
-            subtitle = (
-                "Все фотографии в этой папке разобраны. Файлы уже лежат по папкам."
+            title = tr("Done")
+            subtitle = tr(
+                "All photos in this folder have been sorted. The files are already in their folders."
             )
             icon_name = "check"
             accent = theme.GREEN
@@ -802,21 +816,24 @@ class SortingPage(QWidget):
             stats_row.setContentsMargins(0, 8, 0, 4)
             stats_row.addWidget(
                 CompletionStat(
-                    "heart", theme.GREEN, session.stats["favorite"], "Избранное"
+                    "heart", theme.GREEN, session.stats["favorite"], tr("Favorites")
                 )
             )
             stats_row.addWidget(
-                CompletionStat("trash", theme.RED, session.stats["trash"], "Корзина")
+                CompletionStat("trash", theme.RED, session.stats["trash"], tr("Trash"))
             )
             stats_row.addWidget(
                 CompletionStat(
-                    "clock", theme.AMBER, session.stats["maybe"], "Может быть"
+                    "clock", theme.AMBER, session.stats["maybe"], tr("Maybe")
                 )
             )
             if session.deferred_count or session.first_round_pending:
                 stats_row.addWidget(
                     CompletionStat(
-                        "clock", theme.BLUE, session.deferred_count, "Второй раунд"
+                        "clock",
+                        theme.BLUE,
+                        session.deferred_count,
+                        tr("Second round"),
                     )
                 )
             panel_layout.addLayout(stats_row)
@@ -826,14 +843,16 @@ class SortingPage(QWidget):
         actions.addStretch(1)
         if has_photos and session.mode == "first" and session.deferred_count:
             if session.stats["favorite"]:
-                secondary = QPushButton("Открыть «Избранное»")
+                secondary = QPushButton(tr("Open Favorites"))
                 secondary.setProperty("role", "ghost")
                 secondary.setCursor(Qt.CursorShape.PointingHandCursor)
                 secondary.clicked.connect(
                     lambda: self.reveal_requested.emit("favorite")
                 )
                 actions.addWidget(secondary)
-            primary = QPushButton(f"Второй раунд · {session.deferred_count}")
+            primary = QPushButton(
+                tr("Second round · {count}", count=session.deferred_count)
+            )
             primary.setProperty("role", "primary")
             primary.setIcon(icon("arrow-right", "#1b1507", 16))
             primary.setIconSize(QSize(16, 16))
@@ -842,7 +861,7 @@ class SortingPage(QWidget):
             actions.addWidget(primary)
         elif has_photos and session.mode == "second" and session.first_round_pending:
             if session.stats["favorite"]:
-                secondary = QPushButton("Открыть «Избранное»")
+                secondary = QPushButton(tr("Open Favorites"))
                 secondary.setProperty("role", "ghost")
                 secondary.setCursor(Qt.CursorShape.PointingHandCursor)
                 secondary.clicked.connect(
@@ -850,7 +869,10 @@ class SortingPage(QWidget):
                 )
                 actions.addWidget(secondary)
             primary = QPushButton(
-                f"К первому раунду · {len(session.first_round_pending)}"
+                tr(
+                    "Back to first round · {count}",
+                    count=len(session.first_round_pending),
+                )
             )
             primary.setProperty("role", "primary")
             primary.setIcon(icon("arrow-right", "#1b1507", 16))
@@ -860,14 +882,14 @@ class SortingPage(QWidget):
             actions.addWidget(primary)
         else:
             if has_photos and session.stats["favorite"]:
-                secondary = QPushButton("Открыть «Избранное»")
+                secondary = QPushButton(tr("Open Favorites"))
                 secondary.setProperty("role", "ghost")
                 secondary.setCursor(Qt.CursorShape.PointingHandCursor)
                 secondary.clicked.connect(
                     lambda: self.reveal_requested.emit("favorite")
                 )
                 actions.addWidget(secondary)
-            primary = QPushButton("К библиотеке")
+            primary = QPushButton(tr("Back to library"))
             primary.setProperty("role", "primary")
             primary.setIcon(icon("chevron-left", "#1b1507", 16))
             primary.setIconSize(QSize(16, 16))
@@ -879,7 +901,7 @@ class SortingPage(QWidget):
         if has_photos:
             destination = session.destinations.get("favorite")
             if destination:
-                path_label = QLabel(f"Избранное: {destination}")
+                path_label = QLabel(tr("Favorites: {path}", path=destination))
                 path_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 path_label.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.4pt;")
                 path_label.setWordWrap(True)

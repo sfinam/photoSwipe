@@ -25,11 +25,12 @@ from PySide6.QtWidgets import (
 
 from ..config import Config, ConfigStore, Source, safe_source_name
 from ..controller import ControllerManager
+from ..i18n import set_language, tr
 from ..media import PreviewService
 from ..session import SessionError, SessionManager, SortSession
 from ..shortcuts import event_to_combo
 from ..ui_state import load_ui_state, save_ui_state
-from ..utils import format_count, reveal_in_file_manager
+from ..utils import reveal_in_file_manager
 from . import theme
 from .compare_page import ComparePage
 from .help_dialog import HelpDialog
@@ -59,7 +60,7 @@ class ScanOverlay(QWidget):
         layout.setSpacing(11)
         self.spinner = Spinner(card, 30)
         layout.addWidget(self.spinner, 0, Qt.AlignmentFlag.AlignHCenter)
-        self.title = QLabel("Сканирую папку…")
+        self.title = QLabel(tr("Scanning folder…"))
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title.setStyleSheet(
             f"color: {theme.TEXT}; font-size: 14pt; font-weight: 700;"
@@ -75,7 +76,7 @@ class ScanOverlay(QWidget):
         self.progress.setFixedHeight(6)
         self.progress.setRange(0, 0)
         layout.addWidget(self.progress)
-        self.hint = QLabel("Это может занять несколько секунд для большой папки")
+        self.hint = QLabel(tr("This may take a few seconds for a large folder"))
         self.hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.4pt;")
         layout.addWidget(self.hint)
@@ -83,7 +84,7 @@ class ScanOverlay(QWidget):
         self.card = card
 
     def start(self, source: Source) -> None:
-        self.title.setText("Сканирую папку…")
+        self.title.setText(tr("Scanning folder…"))
         self.detail.setText(source.path)
         self.progress.setRange(0, 0)
         self.show()
@@ -91,12 +92,14 @@ class ScanOverlay(QWidget):
 
     def update_progress(self, stage: str, current: int, total: int) -> None:
         if stage == "scan":
-            self.title.setText("Сканирую папку…")
-            self.detail.setText(f"Найдено файлов: {current}")
+            self.title.setText(tr("Scanning folder…"))
+            self.detail.setText(tr("Files found: {count}", count=current))
             self.progress.setRange(0, 0)
         else:
-            self.title.setText("Читаю метаданные…")
-            self.detail.setText(f"{current} из {total}")
+            self.title.setText(tr("Reading metadata…"))
+            self.detail.setText(
+                tr("{current} of {total}", current=current, total=total)
+            )
             self.progress.setRange(0, max(1, total))
             self.progress.setValue(current)
 
@@ -115,6 +118,7 @@ class MainWindow(QMainWindow):
 
         self.store = ConfigStore()
         self.config: Config = self.store.load()
+        set_language(self.config.language)
         self.manager = SessionManager(self.store)
         self.preview_service = PreviewService()
         self.current_source: Source | None = None
@@ -159,6 +163,9 @@ class MainWindow(QMainWindow):
         self._refresh_library()
         self.show_library()
         QApplication.instance().installEventFilter(self)
+        # Keep a Python reference to the active top-level window. This also
+        # protects a freshly recreated window when the language changes.
+        QApplication.instance()._photoswipe_main_window = self
         QTimer.singleShot(200, self._initial_controller_status)
 
     # ------------------------------------------------------------------
@@ -199,6 +206,7 @@ class MainWindow(QMainWindow):
         self.library_page.settings_requested.connect(self.open_settings)
         self.library_page.help_requested.connect(self.open_help)
         self.library_page.source_action.connect(self._source_action)
+        self.library_page.language_requested.connect(self.change_language)
 
         self.sorting_page.back_requested.connect(self.show_library)
         self.sorting_page.settings_requested.connect(self.open_settings)
@@ -251,7 +259,7 @@ class MainWindow(QMainWindow):
         self.current_source = None
         self._refresh_library()
         self.stack.setCurrentWidget(self.library_page)
-        self.setWindowTitle("PhotoSwipe — библиотека")
+        self.setWindowTitle(tr("PhotoSwipe — Library"))
         self.toast.hide()
 
     # ------------------------------------------------------------------
@@ -264,7 +272,7 @@ class MainWindow(QMainWindow):
             else (str(pictures) if pictures.exists() else str(Path.home()))
         )
         folder = QFileDialog.getExistingDirectory(
-            self, "Выберите папку с фотографиями", start
+            self, tr("Choose a folder with photos"), start
         )
         if not folder:
             return
@@ -285,10 +293,10 @@ class MainWindow(QMainWindow):
             return
         source = self.config.source(source_id)
         if source is None:
-            self.toast.show_message("Папка не найдена в библиотеке", "error")
+            self.toast.show_message(tr("Folder not found in the library"), "error")
             return
         if not source.exists:
-            self.toast.show_message("Папка-источник больше не существует", "error")
+            self.toast.show_message(tr("The source folder no longer exists"), "error")
             self._refresh_library()
             return
         self.current_source = source
@@ -322,7 +330,9 @@ class MainWindow(QMainWindow):
         self.current_session = None
         self.current_source = None
         self.show_library()
-        self.toast.show_message(f"Не удалось открыть папку: {message}", "error", 5000)
+        self.toast.show_message(
+            tr("Could not open folder: {error}", error=message), "error", 5000
+        )
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
@@ -337,7 +347,8 @@ class MainWindow(QMainWindow):
         session = self.current_session
         if verdict == "round2" and session.mode == "second":
             self.toast.show_message(
-                "Второй раунд уже идёт — выберите окончательное решение", "info"
+                tr("The second round is already running — choose a final destination"),
+                "info",
             )
             return
         group = session.queue[0]
@@ -353,10 +364,16 @@ class MainWindow(QMainWindow):
         if self.config.controller.vibration:
             self.controller.rumble()
         messages = {
-            "favorite": (f"В избранном · {group.display_name}", "success"),
-            "trash": (f"В корзину · {group.display_name}", "info"),
-            "maybe": (f"В «Может быть» · {group.display_name}", "warning"),
-            "round2": (f"Отложено на второй раунд · {group.display_name}", "info"),
+            "favorite": (
+                tr("In Favorites · {name}", name=group.display_name),
+                "success",
+            ),
+            "trash": (tr("To trash · {name}", name=group.display_name), "info"),
+            "maybe": (tr("To Maybe · {name}", name=group.display_name), "warning"),
+            "round2": (
+                tr("Deferred to second round · {name}", name=group.display_name),
+                "info",
+            ),
         }
         self.toast.show_message(*messages[verdict])
 
@@ -378,9 +395,7 @@ class MainWindow(QMainWindow):
         else:
             self.sorting_page.refresh(force=True)
         count = len(result.restored)
-        self.toast.show_message(
-            f"Отменено: {format_count(count, 'фото', 'фото', 'фото')}", "success"
-        )
+        self.toast.show_message(tr("Undone: {count}", count=count), "success")
         if self.config.controller.vibration:
             self.controller.rumble()
 
@@ -388,15 +403,14 @@ class MainWindow(QMainWindow):
     def open_compare(self) -> None:
         if not self.current_session or len(self.current_session.queue) < 2:
             self.toast.show_message(
-                "Для сравнения нужны хотя бы две фотографии", "warning"
+                tr("Comparison needs at least two photos"), "warning"
             )
             return
         self._in_compare = True
         self.compare_page.set_session(self.current_session)
         self.stack.setCurrentWidget(self.compare_page)
-        self.setWindowTitle(
-            f"PhotoSwipe — сравнение · {self.current_source.name if self.current_source else ''}"
-        )
+        source_name = self.current_source.name if self.current_source else ""
+        self.setWindowTitle(tr("PhotoSwipe — Compare · {source}", source=source_name))
 
     def exit_compare(self) -> None:
         self._in_compare = False
@@ -431,11 +445,11 @@ class MainWindow(QMainWindow):
         if self.config.controller.vibration:
             self.controller.rumble()
         if choice == "both":
-            message = "Обе фотографии в избранном"
+            message = tr("Both photos are in Favorites")
         elif choice == "skip":
-            message = "Пара отложена на второй раунд"
+            message = tr("Pair deferred to the second round")
         else:
-            message = "Лучший кадр в избранном, второй — в корзине"
+            message = tr("Best shot in Favorites, the other moved to trash")
         self.toast.show_message(message, "success")
 
     def _next_round(self) -> None:
@@ -449,7 +463,9 @@ class MainWindow(QMainWindow):
         self.current_session = session
         self.sorting_page.set_session(session)
         self.stack.setCurrentWidget(self.sorting_page)
-        self.toast.show_message(f"Второй раунд · {len(session.queue)} фото", "info")
+        self.toast.show_message(
+            tr("Second round · {count}", count=len(session.queue)), "info"
+        )
         self._refresh_library()
 
     def _first_round(self) -> None:
@@ -459,11 +475,35 @@ class MainWindow(QMainWindow):
         self.current_session = session
         self.sorting_page.set_session(session)
         self.stack.setCurrentWidget(self.sorting_page)
-        self.toast.show_message("Возвращаемся к первому раунду", "info")
+        self.toast.show_message(tr("Back to the first round"), "info")
         self._refresh_library()
 
     # ------------------------------------------------------------------
+    def change_language(self, code: str) -> None:
+        if code == self.config.language or self._closing:
+            return
+        self.config.language = code
+        set_language(code)
+        self._save_config()
+        QTimer.singleShot(0, self._reopen_for_language)
+
+    def _reopen_for_language(self) -> None:
+        if self._closing:
+            return
+        new_window = MainWindow()
+        geometry = (
+            self.normalGeometry()
+            if self.isFullScreen() or self.isMaximized()
+            else self.geometry()
+        )
+        new_window.setGeometry(geometry)
+        new_window.show()
+        new_window.raise_()
+        self._replacement_window = new_window
+        self.close()
+
     def open_settings(self) -> None:
+        old_language = self.config.language
         dialog = SettingsDialog(
             self.config,
             preview_service=self.preview_service,
@@ -478,6 +518,10 @@ class MainWindow(QMainWindow):
             return
         self.config = dialog.result_config
         self._save_config()
+        if self.config.language != old_language:
+            set_language(self.config.language)
+            QTimer.singleShot(0, self._reopen_for_language)
+            return
         self.controller.set_deadzone(self.config.controller.deadzone)
         self.controller.set_enabled(self.config.controller.enabled)
         self._on_controller_status(
@@ -489,7 +533,7 @@ class MainWindow(QMainWindow):
                 self.current_source
             )
         self._refresh_library()
-        self.toast.show_message("Настройки сохранены", "success")
+        self.toast.show_message(tr("Settings saved"), "success")
         if self.stack.currentWidget() is self.sorting_page:
             self.sorting_page.refresh(force=True)
 
@@ -505,7 +549,10 @@ class MainWindow(QMainWindow):
             reveal_in_file_manager(source.path)
         elif action == "rename":
             name, ok = QInputDialog.getText(
-                self, "Переименовать папку", "Название:", text=source.name
+                self,
+                tr("Rename folder"),
+                tr("Name:"),
+                text=source.name,
             )
             if ok and name.strip():
                 source.name = safe_source_name(name.strip(), source.name)
@@ -513,24 +560,25 @@ class MainWindow(QMainWindow):
                 if self.current_source and self.current_source.id == source.id:
                     self.current_source = source
                 self._refresh_library()
-                self.toast.show_message("Название обновлено", "success")
+                self.toast.show_message(tr("Name updated"), "success")
         elif action in {"recursive", "flat"}:
             source.recursive = action == "recursive"
             self._save_config()
             self._refresh_library()
             self.toast.show_message(
-                "Будут сканироваться подпапки"
+                tr("Subfolders will be scanned")
                 if source.recursive
-                else "Только эта папка",
+                else tr("This folder only"),
                 "info",
             )
         elif action == "reset":
             if (
                 QMessageBox.question(
                     self,
-                    "Сбросить прогресс",
-                    "Счётчики и история отмены этой папки будут очищены. Уже перемещённые файлы останутся на месте.\n\n"
-                    "Продолжить?",
+                    tr("Reset progress"),
+                    tr(
+                        "Counters and undo history for this folder will be cleared. Files that were already moved will stay in place.\n\nContinue?"
+                    ),
                 )
                 != QMessageBox.StandardButton.Yes
             ):
@@ -543,13 +591,16 @@ class MainWindow(QMainWindow):
             if self.current_source and self.current_source.id == source.id:
                 self.show_library()
             self._refresh_library()
-            self.toast.show_message("Прогресс сброшен", "success")
+            self.toast.show_message(tr("Progress reset"), "success")
         elif action == "remove":
             if (
                 QMessageBox.question(
                     self,
-                    "Убрать папку",
-                    f"Убрать «{source.name}» из библиотеки?\n\nФотографии и результаты сортировки останутся на диске.",
+                    tr("Remove folder"),
+                    tr(
+                        "Remove “{name}” from the library?\n\nPhotos and sorting results will stay on disk.",
+                        name=source.name,
+                    ),
                 )
                 != QMessageBox.StandardButton.Yes
             ):
@@ -559,7 +610,7 @@ class MainWindow(QMainWindow):
             if self.current_source and self.current_source.id == source.id:
                 self.show_library()
             self._refresh_library()
-            self.toast.show_message("Папка убрана из библиотеки", "info")
+            self.toast.show_message(tr("Folder removed from the library"), "info")
 
     def _reveal_destination(self, verdict: str) -> None:
         if not self.current_session:
@@ -569,7 +620,9 @@ class MainWindow(QMainWindow):
             return
         path.mkdir(parents=True, exist_ok=True)
         if not reveal_in_file_manager(path):
-            self.toast.show_message(f"Не удалось открыть папку: {path}", "error")
+            self.toast.show_message(
+                tr("Could not open folder: {path}", path=path), "error"
+            )
 
     # ------------------------------------------------------------------
     def toggle_fullscreen(self) -> None:
@@ -594,11 +647,13 @@ class MainWindow(QMainWindow):
 
     def _on_controller_connected(self, name: str) -> None:
         if self.config.controller.enabled:
-            self.toast.show_message(f"Геймпад подключён: {name}", "success", 3500)
+            self.toast.show_message(
+                tr("Gamepad connected: {name}", name=name), "success", 3500
+            )
 
     def _on_controller_disconnected(self) -> None:
         if self.config.controller.enabled:
-            self.toast.show_message("Геймпад отключён", "info")
+            self.toast.show_message(tr("Gamepad disconnected"), "info")
 
     def _initial_controller_status(self) -> None:
         self._on_controller_status(self.controller.name)

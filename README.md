@@ -1,51 +1,54 @@
 # PhotoSwipe
 
-Быстрый **десктопный** сортировщик фотографий: пролистайте папку, оставьте лучшие кадры и разложите остальные по папкам. RAW и JPEG с одинаковым именем обрабатываются как одна фотография. Всё работает локально, без облака и загрузки на сервер.
+[**English**](README.md) · [Русский](README.ru.md) · [Português (Brasil)](README.pt.md)
 
-![Библиотека](docs/screenshots/library.png)
+A fast **desktop** photo culler: flip through a folder, keep the best shots, and sort everything else into folders. RAW and JPEG files with the same name are treated as one photo. Everything runs locally — no cloud, no uploads.
+
+![Library](docs/screenshots/en/library.png)
 
 <p align="center">
-  <img src="docs/screenshots/sorting.png" alt="Сортировка" width="49%">
-  <img src="docs/screenshots/compare.png" alt="Сравнение" width="49%">
+  <img src="docs/screenshots/en/sorting.png" alt="Sorting" width="49%">
+  <img src="docs/screenshots/en/compare.png" alt="Comparison" width="49%">
 </p>
 
-## Почему Python + PySide6
+## Why Python + PySide6
 
-- Один и тот же код работает на **Windows 10/11** и **Linux**; Qt также работает на macOS, но основные целевые платформы — Windows/Linux.
-- Ядро (сканирование, группировка RAW+JPEG, перемещение файлов, история отмены) не зависит от Qt. UI можно заменить, не переписывая логику.
-- PySide6 — официальные Qt-биндинги; есть путь развёртывания на **Android** (`pyside6-android-deploy`). Подробнее в разделе «Android» ниже.
-- RAW читается через **rawpy / LibRaw** (встроено в wheel), поэтому не нужно отдельно устанавливать dcraw или exiftool.
+- The same code runs on **Windows 10/11** and **Linux**. Qt also works on macOS, although Windows/Linux are the primary targets.
+- The core (scanning, RAW+JPEG pairing, file moves, undo history) does not import Qt. The UI can be replaced without rewriting the sorting logic.
+- PySide6 is the official Qt binding. A path to **Android** exists via `pyside6-android-deploy`; see the Android section below.
+- RAW is decoded through **rawpy / LibRaw** (bundled in the wheel), so no separate dcraw or exiftool installation is needed.
 
-## Возможности
+## Features
 
-- Просмотр папки с фотографиями в полноэкранном режиме с тёмным интерфейсом.
-- Четыре решения: **В избранное**, **В корзину**, **Может быть**, **На второй раунд**.
-- Свайпы мышью/пальцем, настраиваемые горячие клавиши, управление геймпадом.
-- Зум колесом и кнопками, перетаскивание, поворот на 90°, сброс вида.
-- **Режим сравнения**: две фотографии рядом, победитель — в избранное, второй кадр — в корзину. Можно оставить обе или отложить пару.
-- RAW + JPEG (и другие форматы) с одинаковым именем — один кадр в интерфейсе; переключение между форматами для просмотра.
-- Sony ARW/SRF/SR2, Adobe DNG, Canon CR2/CR3, Nikon NEF/NRW, Fujifilm RAF, Olympus ORF, Panasonic RW2 и другие форматы LibRaw.
-- Отмена последних действий, в том числе после перезапуска приложения.
-- Безопасное перемещение без перезаписи: при совпадении имён добавляется ` (1)`, ` (2)`.
-- Настраиваемые папки назначения: рядом с источником или в общей папке.
-- Второй раунд: отложенные фотографии остаются на месте и показываются отдельно.
-- Sidecar-файлы (`.xmp`, `.aae`, `.pp3`, `.dop`, `.on1`, `.cos`) переезжают вместе с фотографией.
+- **Interface languages:** English, Russian, and Portuguese (Brazil). Choose the language in **Settings → General** or with the globe button in the Library header.
+- Full-window photo review with a dark, distraction-free interface.
+- Four decisions: **Favorite**, **Trash**, **Maybe**, and **Second round**.
+- Mouse/touch swipes, fully configurable hotkeys, and gamepad input.
+- Zoom with the wheel and buttons, drag to pan, rotate 90°, reset the view.
+- **Comparison mode:** two photos side by side; the winner goes to Favorites, the other to Trash. You can also keep both or defer the pair.
+- RAW + JPEG (and other formats) with the same name are one card. Switch formats for viewing; the decision applies to the whole group.
+- Sony ARW/SRF/SR2, Adobe DNG, Canon CR2/CR3, Nikon NEF/NRW, Fujifilm RAF, Olympus ORF, Panasonic RW2, and other LibRaw formats.
+- Undo recent actions, including after restarting the app.
+- Safe moves that never overwrite: name collisions get a ` (1)`, ` (2)` suffix.
+- Configurable destination folders: beside each source folder or in a shared output root.
+- Second round: deferred photos stay in place and are shown as a separate queue.
+- Sidecar files (`.xmp`, `.aae`, `.pp3`, `.dop`, `.on1`, `.cos`) move with their photo.
 
-## Установка
+## Installation
 
-Нужен **Python 3.10+** (проверено на 3.12).
+Requires **Python 3.10+** (tested on 3.12).
 
 ### Linux
 
 ```bash
-sudo apt install python3-venv libxcb-cursor0 libxkbcommon-x11-0  # обычно уже есть
+sudo apt install python3-venv libxcb-cursor0 libxkbcommon-x11-0  # usually already present
 python3 -m venv .venv
 source .venv/bin/activate
 pip install .
 photoswipe
 ```
 
-Если при запуске появляется ошибка `Could not load the Qt platform plugin "xcb"`, установите системные библиотеки XCB из сообщения Qt и повторите запуск.
+If you see `Could not load the Qt platform plugin "xcb"`, install the XCB libraries named in the Qt error and try again.
 
 ### Windows
 
@@ -56,160 +59,172 @@ pip install .
 photoswipe
 ```
 
-### Запуск из исходников
+### Run from source
 
 ```bash
 python -m photoswipe
 ```
 
-Полезно для переносимой установки:
+For a portable setup:
 
 ```bash
 PHOTOSWIPE_DATA_DIR=/path/to/photo-swipe-data python -m photoswipe
 ```
 
-`PHOTOSWIPE_CACHE_DIR` отдельно задаёт папку кэша превью.
+`PHOTOSWIPE_CACHE_DIR` can override the preview cache location separately.
 
-## Первый запуск
+## First run
 
-1. Нажмите **«Добавить папку»** и выберите каталог с фотографиями. Можно включить сканирование подпапок.
-2. PhotoSwipe найдёт изображения и соберёт пары RAW+JPEG по имени файла.
-3. Принимайте решения стрелками, кнопками, свайпами или геймпадом.
-4. Когда очередь закончится, нажмите **«Второй раунд»**, если есть отложенные кадры.
+1. Click **Add folder** and choose a directory with photos. Subfolder scanning can be enabled.
+2. PhotoSwipe finds images and pairs RAW+JPEG files by name.
+3. Decide with the arrow keys, buttons, swipes, or a gamepad.
+4. When the queue ends, click **Second round** if any photos were deferred.
 
-По умолчанию результаты лежат рядом с исходной папкой:
+By default, results are stored next to the source folder:
 
 ```
-Моя папка/
+My folder/
   _PhotoSwipe/
-    Избранное/
-    Корзина/
-    Может быть/
+    Favorites/
+    Trash/
+    Maybe/
   A7309498.ARW
   A7309498.JPG
 ```
 
-«Второй раунд» ничего не перемещает: отложенные фотографии остаются в исходной папке, пока вы не примете окончательное решение. Папку и имена можно изменить в настройках: рядом с источником или в общей папке, с добавлением имени источника.
+On a fresh install, the default folder names match the system language (for example `Избранное`, `Корзина`, `Может быть` in Russian). Changing the UI language later does not rename existing destination folders; edit them in Settings.
 
-## Горячие клавиши
+The second round does not move files: deferred photos stay in the source folder until you make a final decision. You can switch between “next to the source” and a shared output root, and add the source name as a subfolder.
 
-| Действие | По умолчанию |
+## Interface language
+
+Open **Settings → General** or click the globe button in the Library header. After saving, the window reopens in the new language.
+
+![Language settings](docs/screenshots/en/language.png)
+
+The interface, dialogs, dates, error messages, shortcuts help, and this documentation are available in English, Russian, and Brazilian Portuguese. File names, folder names, and technical EXIF values are never translated.
+
+## Keyboard shortcuts
+
+| Action | Default |
 |---|---|
-| В избранное | `→` или `D` |
-| В корзину | `←` или `A` |
-| Может быть | `↓` или `S` |
-| Второй раунд | `↑` или `W` |
-| Отменить | `Z` |
-| Сравнить | `C` |
-| Увеличить / уменьшить | `+` / `−` |
-| Повернуть вправо / влево | `R` / `Shift + R` |
-| Сбросить вид | `0` |
-| Полный экран | `F` |
-| Справка | `?` или `F1` |
-| К библиотеке | `Esc` |
-| Выход | `Ctrl + Q` |
+| Favorite | `→` or `D` |
+| Trash | `←` or `A` |
+| Maybe | `↓` or `S` |
+| Second round | `↑` or `W` |
+| Undo | `Z` |
+| Compare | `C` |
+| Zoom in / out | `+` / `−` |
+| Rotate right / left | `R` / `Shift + R` |
+| Reset view | `0` |
+| Fullscreen | `F` |
+| Help | `?` or `F1` |
+| Back to library | `Esc` |
+| Quit | `Ctrl + Q` |
 
-Стрелки работают и в русской раскладке. Все комбинации меняются в **Настройки → Клавиши**; на действие можно назначить до четырёх вариантов. Конфликты комбинаций проверяются при назначении.
+Arrow keys work in any keyboard layout, including Russian. All combinations can be changed in **Settings → Shortcuts**; up to four variants per action. Conflicts are checked as you assign them.
 
-### Свайпы
+### Swipes
 
-Когда фотография вписана в окно:
+When the photo is fitted to the window:
 
-- влево — в корзину;
-- вправо — в избранное;
-- вверх — на второй раунд;
-- вниз — в «Может быть».
+- left — to Trash;
+- right — to Favorites;
+- up — second round;
+- down — Maybe.
 
-Если кадр приближен, перетаскивание двигает изображение, а не принимает решение. Двойной щелчок переключает «вписать в окно» / масштаб 1:1. Колесо мыши приближает точку под курсором.
+If you zoom in, dragging pans the image instead of making a decision. Double-click toggles between fit and 1:1 preview scale. The mouse wheel zooms around the cursor.
 
-## Геймпад
+## Gamepad
 
-Поддерживаются контроллеры, которые видит SDL2 (Xbox, DualShock/DualSense, 8BitDo и большинство стандартных контроллеров). Подключите контроллер до запуска приложения.
+SDL2-compatible controllers are supported (Xbox, DualShock/DualSense, 8BitDo, and most standard gamepads). Connect the controller before starting the app.
 
-| Кнопка | Действие |
+| Button | Action |
 |---|---|
-| A / D-pad → | В избранное |
-| B / D-pad ← | В корзину |
-| Y / D-pad ↓ | Может быть |
-| X / D-pad ↑ | Второй раунд |
-| Back / Select | Отменить |
-| Start / Options | Сравнение |
-| LB / RB | Повернуть влево / вправо |
-| LT / RT | Уменьшить / увеличить |
-| Левый стик | Двигать приближенный кадр |
+| A / D-pad → | Favorite |
+| B / D-pad ← | Trash |
+| Y / D-pad ↓ | Maybe |
+| X / D-pad ↑ | Second round |
+| Back / Select | Undo |
+| Start / Options | Compare |
+| LB / RB | Rotate left / right |
+| LT / RT | Zoom out / in |
+| Left stick | Pan a zoomed photo |
 
-В сравнении: D-pad ← или LB — выбрать левый кадр, D-pad → или RB — правый, A — оставить оба, B — выйти, Back — отменить.
+In comparison mode: D-pad ← or LB selects the left photo, D-pad → or RB selects the right one, A keeps both, B exits, Back undoes.
 
-Раскладку можно изменить в **Настройки → Контроллер**. Мёртвая зона стика и виброотклик настраиваются там же. Если pygame не установлен или контроллер не найден, приложение продолжает работать без него.
+Change the mapping in **Settings → Controller**. Stick dead zone and vibration feedback are configured there too. If pygame is unavailable or no controller is connected, the app still works normally.
 
-## Сравнение
+## Comparison
 
-Нажмите **«Сравнить»** или `C`. PhotoSwipe берёт первые две фотографии очереди и показывает их рядом.
+Click **Compare** or press `C`. PhotoSwipe takes the first two photos in the queue and shows them side by side.
 
-- `←` / `A` — левая лучше;
-- `→` / `D` — правая лучше;
-- `Пробел` — обе в избранное;
-- `S` — отложить пару на второй раунд;
-- `Esc` / `C` — выйти.
+- `←` / `A` — the left photo wins;
+- `→` / `D` — the right photo wins;
+- `Space` — keep both as favorites;
+- `S` — defer the pair to the second round;
+- `Esc` / `C` — exit.
 
-Победитель перемещается в «Избранное», второй кадр — в «Корзину». Это одна операция отмены. После решения автоматически открывается следующая пара, пока в очереди есть хотя бы две фотографии.
+The winner moves to Favorites and the other photo to Trash. This is a single undo step. The next pair opens automatically while at least two photos remain.
 
-## RAW и JPEG
+## RAW and JPEG
 
-Файлы с одинаковым именем и разными расширениями в одной папке (`A7309498.ARW` + `A7309498.JPG`) считаются одной карточкой. Кнопки форматов в шапке переключают просмотр, но решение применяется ко всей группе и её sidecar-файлам.
+Files with the same name and different extensions in the same folder (`A7309498.ARW` + `A7309498.JPG`) are one card. The format chips in the header switch the preview, but decisions apply to the whole group and its sidecar files.
 
-Для RAW по умолчанию показывается встроенное JPEG-превью камеры — это быстро и достаточно для отбора. В настройках можно включить **полное декодирование RAW** через LibRaw: деталей больше, но превью создаётся медленнее. Кэш превью можно очистить в **Настройки → RAW и кэш**.
+RAW files use the camera’s embedded JPEG preview by default — fast and sufficient for culling. Enable **Fully decode RAW when viewing** in Settings to demosaic through LibRaw; this gives more detail but is noticeably slower. Clear the preview cache in **Settings → RAW and cache**.
 
-Поддерживаются, в частности:
+Supported formats include:
 
-- RAW: Sony ARW/SRF/SR2, Adobe DNG, Canon CR2/CR3, Nikon NEF/NRW, Fujifilm RAF, Olympus ORF, Panasonic RW2, Pentax PEF, Samsung SRW, Hasselblad 3FR, Leica RWL и другие форматы LibRaw;
-- изображения: JPEG, PNG, TIFF, WebP, BMP, GIF, AVIF, HEIC/HEIF (через pillow-heif).
+- RAW: Sony ARW/SRF/SR2, Adobe DNG, Canon CR2/CR3, Nikon NEF/NRW, Fujifilm RAF, Olympus ORF, Panasonic RW2, Pentax PEF, Samsung SRW, Hasselblad 3FR, Leica RWL, and other LibRaw formats;
+- images: JPEG, PNG, TIFF, WebP, BMP, GIF, AVIF, HEIC/HEIF (via pillow-heif).
 
-## Отмена и безопасность
+## Undo and safety
 
-- Перемещение, а не копирование: файл не остаётся в исходной папке.
-- Существующие файлы никогда не перезаписываются; при конфликте добавляется суффикс.
-- Перед перемещением проверяется, что все файлы группы на месте; при сбое выполняется откат уже перемещённых файлов.
-- Журнал последних **120** действий сохраняется и позволяет отменить действие после перезапуска. Если файл переместили или удалили вне приложения, отмена сообщит об ошибке, не пытаясь угадать.
-- «Корзина» — это обычная папка, а не системная корзина. Так отмена остаётся предсказуемой.
-- «Сбросить прогресс» очищает счётчики и историю, но не возвращает и не удаляет уже разложенные файлы.
+- Files are moved, not copied: they do not remain in the source folder.
+- Existing files are never overwritten; colliding names get a suffix.
+- Before moving, PhotoSwipe verifies that every file in the group is present; on failure it rolls back files already moved.
+- The last **120 actions** are persisted and can be undone even after a restart. If a file was moved or deleted outside the app, undo reports the problem instead of guessing.
+- **Trash** is a normal folder, not the system recycle bin. This keeps undo predictable.
+- **Reset progress** clears counters and undo history for that folder but does not restore or delete files that were already sorted.
 
-## Где хранятся данные
+## Where data is stored
 
-Настройки, сессии и кэш лежат в системной папке приложения:
+Settings, sessions, and the preview cache live in the system application folder:
 
-- Linux: `~/.local/share/PhotoSwipe` и `~/.cache/PhotoSwipe`;
+- Linux: `~/.local/share/PhotoSwipe` and `~/.cache/PhotoSwipe`;
 - Windows: `%LOCALAPPDATA%\PhotoSwipe`.
 
-Точный путь виден в **Настройки → RAW и кэш**. Каталог можно переопределить переменной `PHOTOSWIPE_DATA_DIR` (удобно для портативной установки).
+The exact path is shown in **Settings → RAW and cache**. Override it with `PHOTOSWIPE_DATA_DIR` for a portable install.
 
-## Архитектура
+## Architecture
 
 ```
 photoswipe/
-  config.py          настройки, источники, папки назначения
-  models.py          модели групп, вариантов, метаданных
-  scanner.py         сканирование, группировка RAW+JPEG, EXIF
-  media.py           превью JPEG/RAW и кэш
-  session.py         решения, перемещение, второй раунд, undo
-  controller.py      геймпад через SDL2
-  shortcuts.py       комбинации клавиш
-  ui/                PySide6-интерфейс
+  config.py          settings, sources, destination folders
+  models.py          photo groups, variants, metadata
+  scanner.py         scanning, RAW+JPEG grouping, EXIF
+  media.py           JPEG/RAW previews and cache
+  session.py         decisions, moves, second round, undo
+  i18n.py            language selection and helpers
+  locales/           English-source Russian and Portuguese catalogs
+  controller.py      gamepad via SDL2
+  shortcuts.py       keyboard combinations
+  ui/                PySide6 interface
 ```
 
-Ядро (`config`, `models`, `scanner`, `media`, `session`) не импортирует Qt. Это сделано специально для будущего порта: интерфейс можно заменить на Qt for Android или другой UI, сохранив логику сортировки.
+The core (`config`, `models`, `scanner`, `media`, `session`, `i18n`) does not import Qt. This is deliberate: the UI can be replaced for Android or another platform while keeping the sorting logic.
 
-## Android в будущем
+## Android in the future
 
-Выбранный стек допускает порт, но это отдельная работа:
+This stack can be ported, but it is separate work:
 
-- PySide6 можно развернуть на Android через `pyside6-android-deploy`;
-- вместо нативных диалогов понадобится Storage Access Framework и разрешения Android;
-- `rawpy` — CPython-расширение с LibRaw, для Android потребуется собрать wheel под нужную ABI или использовать встроенные превью через отдельный слой;
-- управление геймпадом и свайпы на touch нужно будет адаптировать;
-- ядро сканирования/перемещения и модели уже отделены от UI.
+- PySide6 can deploy to Android via `pyside6-android-deploy`;
+- native file dialogs need to be replaced with the Storage Access Framework and Android permissions;
+- `rawpy` is a CPython extension around LibRaw and needs an Android ABI wheel or an embedded-preview layer;
+- gamepad and touch swipe handling need adaptation;
+- the scanning/moving core and models are already UI-independent.
 
-## Разработка
+## Development
 
 ```bash
 python3 -m venv .venv
@@ -219,32 +234,32 @@ python -m unittest discover -s tests -t . -v
 python -m photoswipe
 ```
 
-В тестах используются реальные файлы `A7309498.ARW` и `A7309498.JPG`, лежащие в корне репозитория: проверяются группировка, метаданные, RAW-превью, перемещение, sidecar-файлы, второй раунд и undo.
+The tests use the real `A7309498.ARW` and `A7309498.JPG` files in the repository root: grouping, metadata, RAW preview, moves, sidecars, second round, undo, language switching, and UI startup are covered. The suite currently has 30 tests.
 
-### Сборка автономного приложения
+### Standalone build
 
 ```bash
 pip install pyinstaller
 pyinstaller PhotoSwipe.spec
 ```
 
-Готовый файл появится в `dist/`. На Windows для сборки используйте Windows (PyInstaller не делает кросс-компиляцию). Иконки лежат в `assets/`.
+The result appears in `dist/`. Build on Windows to get a Windows executable (PyInstaller does not cross-compile). Icons are in `assets/`.
 
-Для Linux можно установить ярлык:
+Linux desktop shortcut:
 
 ```bash
 pipx install .
 ./packaging/install-desktop.sh
 ```
 
-## Ограничения
+## Limitations
 
-- Группировка RAW+JPEG выполняется в пределах одной папки. Если RAW и JPEG лежат в разных подпапках, они будут разными карточками.
-- Для RAW-файлов без встроенного превью используется LibRaw; на очень больших подборках первое создание превью может занять время.
-- Сравнение берёт первые две фотографии текущей очереди; произвольный выбор пары не предусмотрен.
-- Перемещение на другой диск может занять заметное время — приложение ждёт завершения операции, чтобы не терять файлы.
-- Нет рейтингов, цветовых меток и поиска по метаданным — только отбор.
+- RAW+JPEG pairing works within one folder. If RAW and JPEG are in different subfolders, they become separate cards.
+- RAW files without an embedded preview are decoded by LibRaw; the first preview of a large batch can take time.
+- Comparison always uses the first two photos of the current queue; arbitrary pair selection is not implemented.
+- Moving to another disk can take noticeable time — the app waits for the operation to finish so files are not lost.
+- No ratings, color labels, or metadata search yet — culling only.
 
-## Лицензия
+## License
 
-MIT. См. [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

@@ -5,30 +5,21 @@ import subprocess
 import sys
 from pathlib import Path
 
+from .i18n import decimal_separator, tr
+
 
 def format_bytes(value: int | float) -> str:
     value = float(value or 0)
     if value <= 0:
-        return "0 Б"
-    units = ("Б", "КБ", "МБ", "ГБ", "ТБ")
+        return f"0 {tr('B')}"
+    units = ("B", "KB", "MB", "GB", "TB")
     index = 0
     while value >= 1024 and index < len(units) - 1:
         value /= 1024
         index += 1
-    if index == 0:
-        return f"{int(value)} {units[index]}"
-    return f"{value:.1f}".replace(".", ",") + f" {units[index]}"
-
-
-def format_count(value: int, one: str, few: str, many: str) -> str:
-    value = int(value)
-    if value % 10 == 1 and value % 100 != 11:
-        word = one
-    elif 2 <= value % 10 <= 4 and not 12 <= value % 100 <= 14:
-        word = few
-    else:
-        word = many
-    return f"{value} {word}"
+    separator = decimal_separator()
+    number = f"{int(value)}" if index == 0 else f"{value:.1f}".replace(".", separator)
+    return f"{number} {tr(units[index])}"
 
 
 def reveal_in_file_manager(path: str | Path) -> bool:

@@ -6,6 +6,7 @@ from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 from ..media import PreviewService
 from ..models import PhotoGroup
+from ..i18n import tr
 from ..session import SessionManager
 from ..config import Source
 
@@ -99,5 +100,5 @@ class ScanWorker(QRunnable):
 
     def _progress(self, stage: str, current: int, total: int) -> None:
         if self.cancelled.is_set():
-            raise RuntimeError("Сканирование отменено")
+            raise RuntimeError(tr("Scanning cancelled"))
         self.signals.progress.emit(stage, current, total)

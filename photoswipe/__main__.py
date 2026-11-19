@@ -9,14 +9,14 @@ from pathlib import Path
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="photoswipe", description="PhotoSwipe — быстрый сортировщик фотографий"
+        prog="photoswipe",
+        description="PhotoSwipe — a fast desktop photo culling app",
     )
     parser.add_argument(
-        "--data-dir", help="Папка для настроек, сессий и кэша (по умолчанию системная)"
+        "--data-dir",
+        help="Folder for settings, sessions and cache (system location by default)",
     )
-    parser.add_argument(
-        "--version", action="store_true", help="Показать версию и выйти"
-    )
+    parser.add_argument("--version", action="store_true", help="Show version and exit")
     return parser.parse_args(argv)
 
 
@@ -77,8 +77,8 @@ def main(argv: list[str] | None = None) -> int:
         try:
             QMessageBox.critical(
                 None,
-                "PhotoSwipe — ошибка",
-                f"Что-то пошло не так.\n\n{exc_value}\n\nПодробности записаны в error.log.",
+                "PhotoSwipe — error",
+                f"Something went wrong.\n\n{exc_value}\n\nDetails were written to error.log.",
             )
         except Exception:
             print(detail, file=sys.stderr)

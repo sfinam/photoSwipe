@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .formats import RAW_EXTENSIONS, ext_label, kind_for_ext
+from .i18n import format_date, tr
 
 
 def group_id(key: str) -> str:
@@ -34,8 +35,8 @@ def pretty_shutter(value: float | None) -> str:
     if not value:
         return ""
     if value >= 1:
-        return f"{value:g} с"
-    return f"1/{round(1 / value)} с"
+        return f"{value:g} {tr('s')}"
+    return f"1/{round(1 / value)} {tr('s')}"
 
 
 def pretty_fnumber(value: float | None) -> str:
@@ -43,7 +44,7 @@ def pretty_fnumber(value: float | None) -> str:
 
 
 def pretty_focal(value: float | None) -> str:
-    return f"{value:g} мм" if value else ""
+    return f"{value:g} {tr('mm')}" if value else ""
 
 
 def parse_capture_datetime(value: str | None) -> str | None:
@@ -65,27 +66,7 @@ def parse_capture_datetime(value: str | None) -> str | None:
 
 
 def format_capture_date(iso_value: str | None) -> str:
-    if not iso_value:
-        return ""
-    try:
-        value = datetime.fromisoformat(iso_value)
-    except ValueError:
-        return iso_value
-    months = (
-        "января",
-        "февраля",
-        "марта",
-        "апреля",
-        "мая",
-        "июня",
-        "июля",
-        "августа",
-        "сентября",
-        "октября",
-        "ноября",
-        "декабря",
-    )
-    return f"{value.day} {months[value.month - 1]} {value.year}, {value:%H:%M}"
+    return format_date(iso_value)
 
 
 @dataclass
@@ -268,7 +249,7 @@ class PhotoGroup:
     def from_dict(cls, raw: dict[str, Any]) -> "PhotoGroup":
         variants = [MediaVariant.from_dict(item) for item in raw.get("variants", [])]
         if not variants:
-            raise ValueError("Группа без файлов")
+            raise ValueError(tr("Group has no files"))
         return cls(
             key=str(raw["key"]),
             stem=str(raw.get("stem") or Path(variants[0].path).stem),

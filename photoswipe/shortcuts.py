@@ -5,37 +5,48 @@ from PySide6.QtGui import QKeyEvent
 
 from .config import canonical_combo
 
-ACTION_LABELS = {
-    "favorite": "В избранное",
-    "trash": "В корзину",
-    "maybe": "Может быть",
-    "round2": "На второй раунд",
-    "undo": "Отменить действие",
-    "compare": "Сравнить две",
-    "zoomIn": "Увеличить",
-    "zoomOut": "Уменьшить",
-    "rotateCw": "Повернуть вправо",
-    "rotateCcw": "Повернуть влево",
-    "resetView": "Сбросить вид",
-    "fullscreen": "Полный экран",
-    "help": "Справка",
+from .i18n import tr
+
+_ACTION_LABELS = {
+    "favorite": "Favorite",
+    "trash": "Trash",
+    "maybe": "Maybe",
+    "round2": "Second round",
+    "undo": "Undo",
+    "compare": "Compare",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "rotateCw": "Rotate right",
+    "rotateCcw": "Rotate left",
+    "resetView": "Reset view",
+    "fullscreen": "Fullscreen",
+    "help": "Help",
 }
 
-ACTION_HINTS = {
-    "favorite": "Оставить фотографию",
-    "trash": "Переместить в корзину",
-    "maybe": "В папку «Может быть»",
-    "round2": "Вернуться к фото позже",
-    "undo": "Вернуть последнее решение",
-    "compare": "Показать две фотографии рядом",
-    "zoomIn": "Приблизить изображение",
-    "zoomOut": "Отдалить изображение",
-    "rotateCw": "Повернуть на 90° по часовой",
-    "rotateCcw": "Повернуть на 90° против часовой",
-    "resetView": "Вписать в окно и сбросить поворот",
-    "fullscreen": "Развернуть окно",
-    "help": "Показать подсказки",
+_ACTION_HINTS = {
+    "favorite": "Keep this photo",
+    "trash": "Move to trash",
+    "maybe": "Move to the “Maybe” folder",
+    "round2": "Revisit this photo later",
+    "undo": "Undo the last decision",
+    "compare": "Show two photos side by side",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "rotateCw": "Rotate 90° clockwise",
+    "rotateCcw": "Rotate 90° counterclockwise",
+    "resetView": "Fit to window and reset rotation",
+    "fullscreen": "Toggle fullscreen",
+    "help": "Show shortcuts and tips",
 }
+
+
+def action_label(action: str) -> str:
+    return tr(_ACTION_LABELS.get(action, action))
+
+
+def action_hint(action: str) -> str:
+    return tr(_ACTION_HINTS.get(action, ""))
+
 
 _RU_TO_LATIN = {
     "й": "q",
@@ -262,7 +273,7 @@ def display_combo(combo: str) -> str:
         "ArrowLeft": "←",
         "ArrowUp": "↑",
         "ArrowDown": "↓",
-        "Space": "Пробел",
+        "Space": tr("Space"),
         "Escape": "Esc",
         "Enter": "Enter",
         "Tab": "Tab",

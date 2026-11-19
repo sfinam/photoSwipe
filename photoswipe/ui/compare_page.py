@@ -15,9 +15,9 @@ from PySide6.QtWidgets import (
 )
 
 from ..config import Config
+from ..i18n import tr
 from ..models import PhotoGroup
 from ..session import SortSession
-from ..utils import format_count
 from . import theme
 from .icons import icon
 from .photo_view import PhotoView
@@ -74,18 +74,18 @@ class ComparePane(QFrame):
 
         tool_row = QHBoxLayout()
         tool_row.setSpacing(0)
-        self.zoom_out = IconButton("zoom-out", "Уменьшить", button_size=28, size=15)
+        self.zoom_out = IconButton("zoom-out", tr("Zoom out"), button_size=28, size=15)
         self.zoom_label = QLabel("100%")
         self.zoom_label.setFixedWidth(40)
         self.zoom_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.zoom_label.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8pt;")
-        self.zoom_in = IconButton("zoom-in", "Увеличить", button_size=28, size=15)
-        self.fit = IconButton("minimize", "Вписать", button_size=28, size=15)
+        self.zoom_in = IconButton("zoom-in", tr("Zoom in"), button_size=28, size=15)
+        self.fit = IconButton("minimize", tr("Fit"), button_size=28, size=15)
         self.rot_ccw = IconButton(
-            "rotate-ccw", "Повернуть влево", button_size=28, size=15
+            "rotate-ccw", tr("Rotate left"), button_size=28, size=15
         )
         self.rot_cw = IconButton(
-            "rotate-cw", "Повернуть вправо", button_size=28, size=15
+            "rotate-cw", tr("Rotate right"), button_size=28, size=15
         )
         tool_row.addWidget(self.zoom_out)
         tool_row.addWidget(self.zoom_label)
@@ -107,10 +107,10 @@ class ComparePane(QFrame):
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(12, 10, 12, 12)
         footer_layout.setSpacing(10)
-        hint = QLabel("Победитель → «Избранное», второй → «Корзина»")
+        hint = QLabel(tr("Winner → Favorites, the other → Trash"))
         hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.3pt;")
         footer_layout.addWidget(hint, 1)
-        self.choose_button = QPushButton(f"Выбрать {letter}")
+        self.choose_button = QPushButton(tr("Choose {letter}", letter=letter))
         self.choose_button.setProperty("role", "primary")
         self.choose_button.setMinimumHeight(34)
         self.choose_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -141,9 +141,11 @@ class ComparePane(QFrame):
         self.meta_label.setText(" · ".join(bits) or group.primary.name)
         self.meta_label.setToolTip(group.primary.path)
         self.format_badge.setText(group.format_summary)
-        self.choose_button.setText(f"Выбрать {self.letter}")
+        self.choose_button.setText(tr("Choose {letter}", letter=self.letter))
         if shortcut_hint:
-            self.choose_button.setToolTip(f"Выбрать {self.letter} ({shortcut_hint})")
+            self.choose_button.setToolTip(
+                tr("Choose {letter} ({hint})", letter=self.letter, hint=shortcut_hint)
+            )
 
     def set_busy(self, busy: bool) -> None:
         self.choose_button.setEnabled(not busy and self.group is not None)
@@ -179,7 +181,10 @@ class ComparePage(QWidget):
         header = QHBoxLayout()
         header.setSpacing(10)
         back = IconButton(
-            "chevron-left", "Вернуться к просмотру (Esc)", button_size=38, size=21
+            "chevron-left",
+            tr("Back to review (Esc)"),
+            button_size=38,
+            size=21,
         )
         back.clicked.connect(self.exit_requested)
         header.addWidget(back)
@@ -187,7 +192,7 @@ class ComparePage(QWidget):
         title_box.setSpacing(0)
         title_row = QHBoxLayout()
         title_row.setSpacing(9)
-        title = QLabel("Сравнение")
+        title = QLabel(tr("Compare"))
         title.setStyleSheet(f"color: {theme.TEXT}; font-size: 15pt; font-weight: 750;")
         self.pair_badge = Badge("")
         self.pair_badge.setStyleSheet(
@@ -198,24 +203,28 @@ class ComparePage(QWidget):
         title_row.addWidget(self.pair_badge)
         title_row.addStretch(1)
         subtitle = QLabel(
-            "Два кадра рядом. Выберите лучший — второй отправится в корзину."
+            tr(
+                "Two shots side by side. Choose the better one — the other goes to trash."
+            )
         )
         subtitle.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.8pt;")
         title_box.addLayout(title_row)
         title_box.addWidget(subtitle)
         header.addLayout(title_box, 1)
-        self.undo_button = QPushButton("Отменить")
+        self.undo_button = QPushButton(tr("Undo"))
         self.undo_button.setProperty("role", "subtle")
         self.undo_button.setIcon(icon("undo", theme.TEXT_MUTED, 16))
         self.undo_button.setIconSize(QSize(16, 16))
         self.undo_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.undo_button.clicked.connect(self.undo_requested)
         header.addWidget(self.undo_button)
-        help_button = IconButton("help", "Справка", button_size=36, size=18)
+        help_button = IconButton("help", tr("Help"), button_size=36, size=18)
         help_button.clicked.connect(self.help_requested)
-        settings_button = IconButton("settings", "Настройки", button_size=36, size=18)
+        settings_button = IconButton(
+            "settings", tr("Settings"), button_size=36, size=18
+        )
         settings_button.clicked.connect(self.settings_requested)
-        exit_button = QPushButton("Выйти")
+        exit_button = QPushButton(tr("Exit"))
         exit_button.setProperty("role", "ghost")
         exit_button.setCursor(Qt.CursorShape.PointingHandCursor)
         exit_button.clicked.connect(self.exit_requested)
@@ -244,16 +253,18 @@ class ComparePage(QWidget):
         bottom = QHBoxLayout()
         bottom.setSpacing(9)
         hint = QLabel(
-            "← A — левая   ·   → D — правая   ·   Пробел — обе   ·   S — пропустить   ·   Esc — выйти"
+            tr(
+                "← A — left   ·   → D — right   ·   Space — both   ·   S — skip   ·   Esc — exit"
+            )
         )
         hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.4pt;")
         bottom.addWidget(hint)
         bottom.addStretch(1)
-        self.both_button = QPushButton("Обе в избранное")
+        self.both_button = QPushButton(tr("Keep both as favorites"))
         self.both_button.setProperty("role", "ghost")
         self.both_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.both_button.clicked.connect(lambda: self._choose("both"))
-        self.skip_button = QPushButton("Пропустить пару")
+        self.skip_button = QPushButton(tr("Skip this pair"))
         self.skip_button.setProperty("role", "subtle")
         self.skip_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.skip_button.clicked.connect(lambda: self._choose("skip"))
@@ -284,7 +295,7 @@ class ComparePage(QWidget):
         )
         done_icon.setPixmap(icon("compare", theme.ACCENT, 28).pixmap(28, 28))
         card_layout.addWidget(done_icon, 0, Qt.AlignmentFlag.AlignHCenter)
-        self.done_title = QLabel("Сравнение завершено")
+        self.done_title = QLabel(tr("Comparison complete"))
         self.done_title.setStyleSheet(
             f"color: {theme.TEXT}; font-size: 20pt; font-weight: 750;"
         )
@@ -295,7 +306,7 @@ class ComparePage(QWidget):
         self.done_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.done_text.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 10pt;")
         card_layout.addWidget(self.done_text)
-        done_button = QPushButton("Вернуться к просмотру")
+        done_button = QPushButton(tr("Back to review"))
         done_button.setProperty("role", "primary")
         done_button.setCursor(Qt.CursorShape.PointingHandCursor)
         done_button.setIcon(icon("chevron-left", "#1b1507", 16))
@@ -338,23 +349,29 @@ class ComparePage(QWidget):
             self.stack.setCurrentWidget(self.done_widget)
             self.pair = None
             if session.queue:
-                self.done_title.setText("Осталась одна фотография")
+                self.done_title.setText(tr("One photo left"))
                 self.done_text.setText(
-                    "Для сравнения нужны два кадра. Вернитесь к просмотру, чтобы принять решение по последней фотографии."
+                    tr(
+                        "Comparison needs two shots. Return to review to decide on the last photo."
+                    )
                 )
             elif session.deferred_count:
-                self.done_title.setText("Пары закончились")
+                self.done_title.setText(tr("No more pairs"))
                 self.done_text.setText(
-                    f"Отложено {format_count(session.deferred_count, 'фото', 'фото', 'фото')}. "
-                    "Их можно разобрать во втором раунде."
+                    tr(
+                        "Deferred: {count}. You can review them in the second round.",
+                        count=session.deferred_count,
+                    )
                 )
             else:
-                self.done_title.setText("Сравнение завершено")
-                self.done_text.setText("Все пары в этой очереди просмотрены.")
+                self.done_title.setText(tr("Comparison complete"))
+                self.done_text.setText(
+                    tr("All pairs in this queue have been reviewed.")
+                )
             return
         self.stack.setCurrentWidget(self.pairs_widget)
         self.pair = (session.queue[0], session.queue[1])
-        self.pair_badge.setText(f"Пара {self.pair_number}")
+        self.pair_badge.setText(tr("Pair {number}", number=self.pair_number))
         self.left.set_group(self.pair[0], "← / A")
         self.right.set_group(self.pair[1], "→ / D")
         pair_ids = (self.pair[0].id, self.pair[1].id)
@@ -362,8 +379,8 @@ class ComparePage(QWidget):
             self._loaded_pair_ids = pair_ids
             self.left.view.clear()
             self.right.view.clear()
-            self.left.view.set_loading("Загрузка…")
-            self.right.view.set_loading("Загрузка…")
+            self.left.view.set_loading(tr("Loading…"))
+            self.right.view.set_loading(tr("Loading…"))
             self._load_pane(self.left, self.pair[0], 0)
             self._load_pane(self.right, self.pair[1], 1)
         self.set_busy(self._busy)
@@ -408,12 +425,12 @@ class ComparePage(QWidget):
         if expected.id != group_id:
             return
         if error or not path:
-            pane.view.set_error("Не удалось открыть фотографию")
+            pane.view.set_error(tr("Could not open the photo"))
             self.error_occurred.emit(f"{expected.primary.name}: {error}")
             return
         pixmap = QPixmap(path)
         if pixmap.isNull():
-            pane.view.set_error("Не удалось загрузить превью")
+            pane.view.set_error(tr("Could not load preview"))
             return
         key = f"{group_id}:{variant_index}"
         self._pixmap_cache[key] = pixmap

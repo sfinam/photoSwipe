@@ -1,0 +1,1 @@
+"""Interface translation catalogs."""

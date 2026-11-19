@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..i18n import tr
 from . import theme
 from .icons import brand_pixmap, icon
 
@@ -58,7 +59,7 @@ class HLine(QFrame):
 
 class BrandWidget(QWidget):
     def __init__(
-        self, subtitle: str = "быстрый отбор фотографий", parent: QWidget | None = None
+        self, subtitle: str | None = None, parent: QWidget | None = None
     ) -> None:
         super().__init__(parent)
         layout = QHBoxLayout(self)
@@ -73,7 +74,9 @@ class BrandWidget(QWidget):
         text_layout.setSpacing(0)
         title = QLabel("PhotoSwipe")
         title.setProperty("role", "brand")
-        subtitle_label = QLabel(subtitle)
+        subtitle_label = QLabel(
+            subtitle if subtitle is not None else tr("fast photo culling")
+        )
         subtitle_label.setProperty("role", "micro")
         text_layout.addWidget(title)
         text_layout.addWidget(subtitle_label)
@@ -197,7 +200,7 @@ class DecisionButton(QPushButton):
             f"color: {theme.TEXT}; font-size: 10.5pt; font-weight: 650;"
         )
         title_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        hint_label = QLabel("нажмите или свайпните")
+        hint_label = QLabel(tr("click or swipe"))
         hint_label.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.2pt;")
         hint_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         text_layout.addWidget(title_label)

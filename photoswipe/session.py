@@ -10,18 +10,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .config import Config, ConfigStore, Source, now_iso
+from .i18n import tr
 from .models import PhotoGroup, natural_key
 from .paths import ensure_dirs, sessions_dir
 from .scanner import ProgressFn, scan_source
 
 VERDICTS = ("favorite", "trash", "maybe", "round2")
 MOVE_VERDICTS = ("favorite", "trash", "maybe")
-VERDICT_LABELS = {
-    "favorite": "В избранное",
-    "trash": "В корзину",
-    "maybe": "Может быть",
-    "round2": "На второй раунд",
-}
 MAX_JOURNAL = 120
 
 
@@ -79,14 +74,14 @@ def _plan_targets(
             return targets
         number += 1
         if number > 9999:
-            raise SessionError("Не удалось подобрать свободное имя файла")
+            raise SessionError(tr("Could not find a free file name"))
 
 
 def _move_file(source: Path, target: Path) -> None:
     if not source.is_file():
-        raise SessionError(f"Файл не найден: {source.name}")
+        raise SessionError(tr("File not found: {name}", name=source.name))
     if target.exists():
-        raise SessionError(f"Файл уже существует: {target.name}")
+        raise SessionError(tr("File already exists: {name}", name=target.name))
     target.parent.mkdir(parents=True, exist_ok=True)
     try:
         os.rename(source, target)
@@ -236,11 +231,11 @@ class SortSession:
 
     def destination_for(self, verdict: str) -> Path:
         if verdict == "round2":
-            raise SessionError("Для второго раунда файлы не перемещаются")
+            raise SessionError(tr("Files are not moved in the second round"))
         try:
             return self.destinations[verdict]
         except KeyError as error:
-            raise SessionError("Неизвестное решение") from error
+            raise SessionError(tr("Unknown decision")) from error
 
     # ---- persistence -----------------------------------------------------
 
@@ -259,27 +254,31 @@ class SortSession:
     def decide(self, groups: list[PhotoGroup], verdicts: list[str]) -> DecisionResult:
         with self._lock:
             if not groups or len(groups) != len(verdicts):
-                raise SessionError("Некорректный набор решений")
+                raise SessionError(tr("Invalid decision set"))
             ids = [group.id for group in groups]
             if len(set(ids)) != len(ids):
-                raise SessionError("Одна и та же фотография выбрана дважды")
+                raise SessionError(tr("The same photo was selected twice"))
             active_ids = {group.id for group in self.groups}
             for group in groups:
                 if group.id not in active_ids:
-                    raise SessionError("Эта фотография уже обработана")
+                    raise SessionError(tr("This photo has already been processed"))
                 if group.key in self.deferred_set and self.mode != "second":
                     # Deferred groups should not be in the first-round queue,
                     # but keep the check tolerant for recovered sessions.
                     pass
                 for variant in group.files:
                     if not Path(variant.path).is_file():
-                        raise SessionError(f"Файл не найден: {variant.name}")
+                        raise SessionError(
+                            tr("File not found: {name}", name=variant.name)
+                        )
             for verdict in verdicts:
                 if verdict not in VERDICTS:
-                    raise SessionError("Неизвестное решение")
+                    raise SessionError(tr("Unknown decision"))
                 if self.mode == "second" and verdict == "round2":
                     raise SessionError(
-                        "Второй раунд уже идёт — выберите «Избранное», «Корзину» или «Может быть»"
+                        tr(
+                            "The second round is already in progress — choose Favorite, Trash or Maybe"
+                        )
                     )
 
             journal_entries: list[dict] = []
@@ -353,7 +352,7 @@ class SortSession:
         with self._lock:
             journal = self.state.get("journal", [])
             if not journal:
-                raise SessionError("Отменять больше нечего")
+                raise SessionError(tr("Nothing to undo"))
             entry = journal[-1]
             moves = entry.get("moves", [])
             # Verify every move can be reversed before touching files.
@@ -362,11 +361,17 @@ class SortSession:
                 current = Path(move["to"])
                 if not current.is_file():
                     raise SessionError(
-                        f"Не удалось отменить: файл {current.name} больше не найден"
+                        tr(
+                            "Could not undo: file {name} is no longer there",
+                            name=current.name,
+                        )
                     )
                 if original.exists():
                     raise SessionError(
-                        f"Не удалось отменить: {original.name} уже существует на месте"
+                        tr(
+                            "Could not undo: {name} already exists at the original location",
+                            name=original.name,
+                        )
                     )
             reversed_moves: list[tuple[Path, Path]] = []
             try:
@@ -377,7 +382,9 @@ class SortSession:
                     reversed_moves.append((current, original))
             except Exception as error:
                 _rollback_moves(reversed_moves)
-                raise SessionError(f"Не удалось отменить: {error}") from error
+                raise SessionError(
+                    tr("Could not undo: {error}", error=error)
+                ) from error
 
             for item in entry.get("entries", []):
                 verdict = item["verdict"]
@@ -416,7 +423,7 @@ class SortSession:
 
     def start_second_round(self) -> "SortSession":
         if not self.deferred_set:
-            raise SessionError("Нет фотографий для второго раунда")
+            raise SessionError(tr("No photos for the second round"))
         self.state["mode"] = "second"
         self.state["round_number"] = max(2, self.round_number + 1)
         self.refresh_queue()
@@ -519,7 +526,7 @@ class SessionManager:
 
     def open(self, source: Source, progress: ProgressFn | None = None) -> SortSession:
         if not source.exists:
-            raise SessionError("Папка-источник не найдена")
+            raise SessionError(tr("Source folder not found"))
         state = self.load_state(source)
         result = scan_source(
             source,
@@ -582,4 +589,6 @@ class SessionManager:
         try:
             self.state_path(source).unlink(missing_ok=True)
         except OSError as error:
-            raise SessionError(f"Не удалось сбросить сессию: {error}") from error
+            raise SessionError(
+                tr("Could not reset the session: {error}", error=error)
+            ) from error

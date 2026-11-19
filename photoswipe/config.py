@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .i18n import default_folder_names, normalize_language, system_language, tr
 from .paths import config_file, ensure_dirs
 
 MODIFIERS = ("Ctrl", "Alt", "Shift", "Meta")
@@ -103,17 +104,17 @@ def safe_source_name(value: str, fallback: str) -> str:
 
 def canonical_combo(value: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise ValueError("Пустой шорткат")
+        raise ValueError(tr("Empty shortcut"))
     pieces = [p.strip() for p in value.split("+")]
     code = pieces.pop()
     if not _CODE_RE.match(code):
-        raise ValueError(f"Неподдерживаемая клавиша: {code or '—'}")
+        raise ValueError(tr("Unsupported key: {key}", key=code or "—"))
     seen: list[str] = []
     for modifier in pieces:
         if modifier not in MODIFIERS:
-            raise ValueError(f"Неизвестный модификатор: {modifier}")
+            raise ValueError(tr("Unknown modifier: {modifier}", modifier=modifier))
         if modifier in seen:
-            raise ValueError(f"Модификатор повторяется: {modifier}")
+            raise ValueError(tr("Modifier repeated: {modifier}", modifier=modifier))
         seen.append(modifier)
     ordered = [m for m in MODIFIERS if m in seen]
     return "+".join([*ordered, code])
@@ -190,10 +191,21 @@ class Destinations:
     maybe: str = "Может быть"
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any] | None) -> "Destinations":
+    def localized(cls, language: str | None = None) -> "Destinations":
+        names = default_folder_names(language)
+        return cls(
+            favorite=names["favorite"],
+            trash=names["trash"],
+            maybe=names["maybe"],
+        )
+
+    @classmethod
+    def from_dict(
+        cls, raw: dict[str, Any] | None, language: str | None = None
+    ) -> "Destinations":
         raw = raw or {}
         folders = raw.get("folders") if isinstance(raw.get("folders"), dict) else {}
-        default = cls()
+        default = cls.localized(language)
         return cls(
             mode="custom" if raw.get("mode") == "custom" else "beside",
             beside_dir_name=safe_folder_name(
@@ -256,23 +268,23 @@ class Destinations:
             base = self.base_dir(source)
             return str(base)
         if self.mode == "beside":
-            return f"Рядом с каждой папкой: {self.beside_dir_name}"
-        suffix = " / <имя папки>" if self.add_source_name else ""
+            return tr("Next to each folder: {name}", name=self.beside_dir_name)
+        suffix = tr(" / <source name>") if self.add_source_name else ""
         return f"{self.custom_root}{suffix}"
 
     def validate(self) -> None:
         if self.mode not in {"beside", "custom"}:
-            raise ValueError("Неизвестный режим папок назначения")
+            raise ValueError(tr("Unknown destination mode"))
         if not self.beside_dir_name.strip():
-            raise ValueError("Укажите имя папки для результатов")
+            raise ValueError(tr("Enter a folder name for results"))
         if self.mode == "custom" and not self.custom_root.strip():
-            raise ValueError("Укажите общую папку для результатов")
+            raise ValueError(tr("Choose a shared folder for results"))
         names = [self.favorite, self.trash, self.maybe]
         if not all(name.strip() for name in names):
-            raise ValueError("Имена папок не могут быть пустыми")
+            raise ValueError(tr("Folder names cannot be empty"))
         if len({name.casefold() for name in names}) != 3:
             raise ValueError(
-                "Папки «Избранное», «Корзина» и «Может быть» должны называться по-разному"
+                tr("Favorites, Trash and Maybe folders must have different names")
             )
 
 
@@ -356,6 +368,7 @@ class Behavior:
 @dataclass
 class Config:
     version: int = 1
+    language: str = field(default_factory=system_language)
     sources: list[Source] = field(default_factory=list)
     destinations: Destinations = field(default_factory=Destinations)
     shortcuts: dict[str, list[str]] = field(
@@ -367,6 +380,12 @@ class Config:
     @classmethod
     def from_dict(cls, raw: dict[str, Any] | None) -> "Config":
         raw = raw or {}
+        language = normalize_language(raw.get("language"))
+        raw_destinations = raw.get("destinations")
+        if isinstance(raw_destinations, dict):
+            destinations = Destinations.from_dict(raw_destinations, language)
+        else:
+            destinations = Destinations.localized(language)
         sources: list[Source] = []
         seen: set[str] = set()
         for item in (
@@ -403,8 +422,9 @@ class Config:
 
         return cls(
             version=1,
+            language=language,
             sources=sources,
-            destinations=Destinations.from_dict(raw.get("destinations")),
+            destinations=destinations,
             shortcuts=shortcuts,
             controller=ControllerSettings.from_dict(raw.get("controller")),
             behavior=Behavior.from_dict(raw.get("behavior")),
@@ -413,6 +433,7 @@ class Config:
     def to_dict(self) -> dict[str, Any]:
         return {
             "version": 1,
+            "language": self.language,
             "sources": [s.to_dict() for s in self.sources],
             "destinations": self.destinations.to_dict(),
             "shortcuts": {k: list(v) for k, v in self.shortcuts.items()},
@@ -432,7 +453,7 @@ class Config:
     def add_source(self, path: str | Path, recursive: bool | None = None) -> Source:
         resolved = Path(path).expanduser().resolve()
         if not resolved.is_dir():
-            raise ValueError("Папка не найдена")
+            raise ValueError(tr("Folder not found"))
         existing = next((s for s in self.sources if Path(s.path) == resolved), None)
         if existing:
             return existing
@@ -460,7 +481,11 @@ class ConfigStore:
         ensure_dirs()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if not self.path.exists():
-            self._config = Config()
+            language = system_language()
+            self._config = Config(
+                language=language,
+                destinations=Destinations.localized(language),
+            )
             self.save(self._config)
             return self._config
         try:
@@ -474,7 +499,7 @@ class ConfigStore:
         if config is not None:
             self._config = config
         if self._config is None:
-            raise RuntimeError("Конфигурация не загружена")
+            raise RuntimeError(tr("Configuration is not loaded"))
         self.path.parent.mkdir(parents=True, exist_ok=True)
         clean = Config.from_dict(self._config.to_dict())
         self._config = clean

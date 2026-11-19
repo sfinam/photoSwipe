@@ -6,6 +6,8 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
+from .i18n import tr
+
 try:
     import pygame
 except Exception:  # pragma: no cover - optional dependency runtime failure
@@ -32,7 +34,7 @@ BUTTON_LABELS = {
 
 
 def button_label(index: int) -> str:
-    return BUTTON_LABELS.get(index, f"Кнопка {index}")
+    return BUTTON_LABELS.get(index, tr("Button {index}", index=index))
 
 
 def button_choices() -> list[tuple[int, str]]:

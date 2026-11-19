@@ -13,15 +13,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..i18n import tr
 from . import theme
 from .icons import icon
 from .widgets import Spinner
 
 _SWIPE_META = {
-    "left": ("trash", "В корзину", theme.RED),
-    "right": ("favorite", "В избранное", theme.GREEN),
-    "up": ("round2", "На второй раунд", theme.BLUE),
-    "down": ("maybe", "Может быть", theme.AMBER),
+    "left": ("trash", "Trash", theme.RED),
+    "right": ("favorite", "Favorite", theme.GREEN),
+    "up": ("round2", "Second round", theme.BLUE),
+    "down": ("maybe", "Maybe", theme.AMBER),
 }
 
 
@@ -112,7 +113,7 @@ class LoadingOverlay(QFrame):
         layout.setSpacing(10)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.spinner = Spinner(self, 28)
-        self.label = QLabel("Загрузка…")
+        self.label = QLabel(tr("Loading…"))
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 10pt;")
         layout.addWidget(self.spinner, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -223,13 +224,15 @@ class PhotoView(QGraphicsView):
         self.fit_to_window()
         self.rotation_changed.emit(0)
 
-    def set_loading(self, message: str = "Загрузка фото…") -> None:
+    def set_loading(self, message: str | None = None) -> None:
+        message = message or tr("Loading photo…")
         if self.has_image:
             return
         self._loading.show_message(message)
         self._loading._center()
 
-    def set_error(self, message: str = "Не удалось открыть фотографию") -> None:
+    def set_error(self, message: str | None = None) -> None:
+        message = message or tr("Could not open the photo")
         self._pixmap = None
         self._item.setPixmap(QPixmap())
         self._loading.show_error(message)
