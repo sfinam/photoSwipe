@@ -16,8 +16,24 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--data-dir",
         help="Folder for settings, sessions and cache (system location by default)",
     )
+    parser.add_argument(
+        "--portable",
+        action="store_true",
+        help="Keep settings and cache next to the executable in PhotoSwipeData",
+    )
     parser.add_argument("--version", action="store_true", help="Show version and exit")
     return parser.parse_args(argv)
+
+
+def portable_root() -> Path:
+    """Folder that contains the executable, or the source checkout in dev mode."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parents[1]
+
+
+def portable_data_dir() -> Path:
+    return portable_root() / "PhotoSwipeData"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -31,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         os.environ["PHOTOSWIPE_DATA_DIR"] = str(
             Path(args.data_dir).expanduser().resolve()
         )
+    elif args.portable or (portable_root() / "portable.flag").is_file():
+        os.environ.setdefault("PHOTOSWIPE_DATA_DIR", str(portable_data_dir()))
 
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QIcon

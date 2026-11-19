@@ -21,6 +21,7 @@ A fast **desktop** photo culler: flip through a folder, keep the best shots, and
 ## Features
 
 - **Interface languages:** English, Russian, and Portuguese (Brazil). Choose the language in **Settings → General** or with the globe button in the Library header.
+- **Portable Windows mode:** keep settings, sessions, and cache next to the executable on a USB drive.
 - Full-window photo review with a dark, distraction-free interface.
 - Four decisions: **Favorite**, **Trash**, **Maybe**, and **Second round**.
 - Mouse/touch swipes, fully configurable hotkeys, and gamepad input.
@@ -58,6 +59,23 @@ py -3.12 -m venv .venv
 pip install .
 photoswipe
 ```
+
+### Portable Windows / USB drive
+
+1. Build `PhotoSwipe.exe` on Windows (see the standalone build section) or copy an existing build.
+2. Put the executable in its own folder.
+3. Create an empty file named `portable.flag` next to `PhotoSwipe.exe`. Alternatively, copy `packaging/portable.bat` next to it and launch that file.
+4. Start the app. Settings, sessions, undo history, and preview cache are stored in `PhotoSwipeData` beside the executable.
+
+You can also launch it explicitly with:
+
+```powershell
+PhotoSwipe.exe --portable
+```
+
+The folder is then self-contained — move it to another PC or USB drive with the whole `PhotoSwipeData` directory. Deleting `PhotoSwipeData` resets app state and cache but does not touch your photos. The `PHOTOSWIPE_DATA_DIR` environment variable still works as a manual override.
+
+After building on Windows, `packaging/make_portable_windows.ps1` creates a ready-to-copy `dist\PhotoSwipePortable` folder with the executable, data marker, and launcher.
 
 ### Run from source
 
@@ -114,6 +132,7 @@ The interface, dialogs, dates, error messages, shortcuts help, and this document
 | Second round | `↑` or `W` |
 | Undo | `Z` |
 | Compare | `C` |
+| RAW display: JPEG → thumbnail → full | `T` |
 | Zoom in / out | `+` / `−` |
 | Rotate right / left | `R` / `Shift + R` |
 | Reset view | `0` |
@@ -161,17 +180,24 @@ Click **Compare** or press `C`. PhotoSwipe takes the first two photos in the que
 
 - `←` / `A` — the left photo wins;
 - `→` / `D` — the right photo wins;
+- `Shift + ←` / `Shift + →` — skip only that photo, defer it to the second round, and bring the next queued photo into its place;
 - `Space` — keep both as favorites;
 - `S` — defer the pair to the second round;
 - `Esc` / `C` — exit.
 
-The winner moves to Favorites and the other photo to Trash. This is a single undo step. The next pair opens automatically while at least two photos remain.
+The winner moves to Favorites and the other photo to Trash. This is a single undo step. The next pair opens automatically while at least two photos remain. A single-side skip also uses one undo step and is available during the first pass; during the second round both photos must receive a final outcome.
 
 ## RAW and JPEG
 
 Files with the same name and different extensions in the same folder (`A7309498.ARW` + `A7309498.JPG`) are one card. The format chips in the header switch the preview, but decisions apply to the whole group and its sidecar files.
 
-RAW files use the camera’s embedded JPEG preview by default — fast and sufficient for culling. Enable **Fully decode RAW when viewing** in Settings to demosaic through LibRaw; this gives more detail but is noticeably slower. Clear the preview cache in **Settings → RAW and cache**.
+RAW display can be switched quickly with the **RAW display** button in the viewer or with `T`. The mode cycles through:
+
+1. **JPEG from the RAW+JPEG pair** — fastest; uses the embedded RAW preview when no JPEG is paired.
+2. **RAW thumbnail** — always uses the camera’s embedded preview.
+3. **Full RAW decode** — demosaics through LibRaw for maximum detail, noticeably slower.
+
+The same choice is available as **Settings → RAW → RAW display** and is used in comparison mode too. Clear previews in **Settings → RAW and cache**.
 
 Supported formats include:
 
@@ -234,7 +260,7 @@ python -m unittest discover -s tests -t . -v
 python -m photoswipe
 ```
 
-The tests use the real `A7309498.ARW` and `A7309498.JPG` files in the repository root: grouping, metadata, RAW preview, moves, sidecars, second round, undo, language switching, and UI startup are covered. The suite currently has 30 tests.
+The tests use the real `A7309498.ARW` and `A7309498.JPG` files in the repository root: grouping, metadata, RAW display modes, previews, moves, sidecars, comparison skip, second round, undo, language switching, portable paths, and UI startup are covered. The suite currently has 36 tests.
 
 ### Standalone build
 
@@ -256,7 +282,7 @@ pipx install .
 
 - RAW+JPEG pairing works within one folder. If RAW and JPEG are in different subfolders, they become separate cards.
 - RAW files without an embedded preview are decoded by LibRaw; the first preview of a large batch can take time.
-- Comparison always uses the first two photos of the current queue; arbitrary pair selection is not implemented.
+- Comparison uses the first two photos of the current queue; arbitrary pair selection is not implemented. Single-side skipping brings the next queued photo into that pane.
 - Moving to another disk can take noticeable time — the app waits for the operation to finish so files are not lost.
 - No ratings, color labels, or metadata search yet — culling only.
 

@@ -103,7 +103,7 @@ class HelpDialog(QDialog):
         layout.addWidget(
             self._note(
                 tr(
-                    "In comparison mode: ← / A chooses the left shot, → / D the right one, Space keeps both as favorites, S defers the pair, Esc exits. These keys are fixed and independent of the main shortcut layout."
+                    "In comparison mode: ← / A chooses the left shot, → / D the right one, Shift+← / Shift+→ skips only that photo and replaces it with the next one in the queue, Space keeps both as favorites, S defers the pair, Esc exits."
                 )
             )
         )
@@ -254,7 +254,7 @@ class HelpDialog(QDialog):
         layout.addWidget(
             self._note(
                 tr(
-                    "Files with the same name and different extensions are treated as one photo. You can switch between ARW and JPEG for viewing, but a decision applies to the whole pair, including XMP and other sidecar files. RAW is shown via the camera’s embedded preview; full decoding can be enabled in Settings."
+                    "Files with the same name and different extensions are treated as one photo. You can switch between ARW and JPEG for viewing, but a decision applies to the whole pair, including XMP and other sidecar files. Press T or use the RAW display button to cycle between the paired JPEG, the embedded RAW preview and a full RAW decode."
                 )
             )
         )

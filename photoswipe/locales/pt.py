@@ -320,3 +320,36 @@ TRANSLATIONS: dict[str, str] = {
     "Could not open folder: {path}": "Não foi possível abrir a pasta: {path}",
     "Gamepad disconnected": "Controle desconectado",
 }
+
+TRANSLATIONS.update(
+    {
+        "RAW display": "Exibição RAW",
+        "Cycle JPEG, RAW thumbnail and full RAW": "Alternar JPEG, prévia RAW e RAW completo",
+        "JPEG": "JPEG",
+        "RAW thumbnail": "Prévia RAW",
+        "RAW full": "RAW completo",
+        "Display mode: {mode}. Click to cycle between JPEG, RAW thumbnail and full RAW.": "Modo de exibição: {mode}. Clique para alternar entre JPEG, prévia RAW e RAW completo.",
+        "JPEG from the RAW+JPEG pair": "JPEG do par RAW+JPEG",
+        "RAW preview (embedded thumbnail)": "Prévia RAW (miniatura embutida)",
+        "Full RAW decode (LibRaw)": "Decodificação RAW completa (LibRaw)",
+        "JPEG uses the paired JPEG when available and the embedded RAW preview otherwise. RAW thumbnail always uses the camera preview. Full decode gives more detail but is noticeably slower.": "JPEG usa o JPEG do par quando disponível e, caso contrário, a prévia RAW embutida. “Prévia RAW” sempre usa a miniatura da câmera. A decodificação completa oferece mais detalhes, mas é bem mais lenta.",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "Skip": "Pular",
+        "Skip {letter} and replace it with the next photo (Shift+←/→)": "Pular {letter} e substituir pela próxima foto (Shift+←/→)",
+        "{letter} deferred to the second round": "{letter} adiada para a segunda rodada",
+        "Skipping is not available in the second round": "Pular não está disponível na segunda rodada",
+        "Display mode: {mode}": "Modo de exibição: {mode}",
+        "← A — left   ·   → D — right   ·   Shift+←/→ — skip one   ·   Space — both   ·   S — skip pair   ·   Esc — exit": "← A — esquerda   ·   → D — direita   ·   Shift+←/→ — pular uma   ·   Espaço — ambas   ·   S — pular par   ·   Esc — sair",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "In comparison mode: ← / A chooses the left shot, → / D the right one, Shift+← / Shift+→ skips only that photo and replaces it with the next one in the queue, Space keeps both as favorites, S defers the pair, Esc exits.": "No modo de comparação: ← / A escolhe a foto da esquerda, → / D a da direita, Shift+← / Shift+→ pula apenas essa foto e a substitui pela próxima da fila, Espaço mantém as duas em Favoritos, S adia o par, Esc sai.",
+        "Files with the same name and different extensions are treated as one photo. You can switch between ARW and JPEG for viewing, but a decision applies to the whole pair, including XMP and other sidecar files. Press T or use the RAW display button to cycle between the paired JPEG, the embedded RAW preview and a full RAW decode.": "Arquivos com o mesmo nome e extensões diferentes são tratados como uma foto. Você pode alternar entre ARW e JPEG para visualizar, mas a decisão vale para o par inteiro, incluindo XMP e outros sidecars. Pressione T ou use o botão de exibição RAW para alternar entre o JPEG do par, a prévia RAW embutida e a decodificação RAW completa.",
+    }
+)

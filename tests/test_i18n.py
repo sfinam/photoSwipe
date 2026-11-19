@@ -4,6 +4,7 @@ import os
 import unittest
 from unittest.mock import patch
 
+from photoswipe.__main__ import _parse_args, portable_data_dir, portable_root
 from photoswipe.config import ConfigStore
 from photoswipe.i18n import (
     current_language,
@@ -71,6 +72,11 @@ class I18nTests(unittest.TestCase):
         self.assertEqual(config.destinations.favorite, "Favoritos")
         self.assertEqual(config.destinations.trash, "Lixeira")
         self.assertEqual(config.destinations.maybe, "Talvez")
+
+    def test_portable_paths_are_next_to_the_executable_source(self) -> None:
+        self.assertEqual(portable_data_dir(), portable_root() / "PhotoSwipeData")
+        self.assertTrue(_parse_args(["--portable"]).portable)
+        self.assertFalse(_parse_args([]).portable)
 
     def test_language_persists_in_config(self) -> None:
         path = self.ws.base / "config.json"

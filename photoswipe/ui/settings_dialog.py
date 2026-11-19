@@ -601,12 +601,22 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(_title(tr("RAW"), tr("Affects viewing quality and speed.")))
         panel2, body2 = _panel()
-        self.full_raw_check = QCheckBox(tr("Fully decode RAW when viewing"))
-        self.full_raw_check.setChecked(self.config.behavior.raw_full_decode)
-        body2.addWidget(self.full_raw_check)
+        raw_row = QHBoxLayout()
+        raw_label = QLabel(tr("RAW display"))
+        raw_label.setStyleSheet(f"color: {theme.TEXT}; font-size: 9.5pt;")
+        self.raw_view_combo = QComboBox()
+        self.raw_view_combo.addItem(tr("JPEG from the RAW+JPEG pair"), "jpeg")
+        self.raw_view_combo.addItem(tr("RAW preview (embedded thumbnail)"), "thumbnail")
+        self.raw_view_combo.addItem(tr("Full RAW decode (LibRaw)"), "full")
+        index = self.raw_view_combo.findData(self.config.behavior.raw_view_mode)
+        self.raw_view_combo.setCurrentIndex(index if index >= 0 else 0)
+        raw_row.addWidget(raw_label)
+        raw_row.addStretch(1)
+        raw_row.addWidget(self.raw_view_combo)
+        body2.addLayout(raw_row)
         hint = QLabel(
             tr(
-                "By default PhotoSwipe shows the camera’s embedded JPEG preview — it is fast and good enough for culling. Full LibRaw decoding gives more detail but is noticeably slower."
+                "JPEG uses the paired JPEG when available and the embedded RAW preview otherwise. RAW thumbnail always uses the camera preview. Full decode gives more detail but is noticeably slower."
             )
         )
         hint.setWordWrap(True)
@@ -934,7 +944,9 @@ class SettingsDialog(QDialog):
             "name" if self.sort_combo.currentIndex() == 1 else "date"
         )
         self.config.behavior.recursive_default = self.recursive_check.isChecked()
-        self.config.behavior.raw_full_decode = self.full_raw_check.isChecked()
+        self.config.behavior.raw_view_mode = str(
+            self.raw_view_combo.currentData() or "jpeg"
+        )
         self.config.controller.enabled = self.controller_enabled.isChecked()
         self.config.controller.deadzone = self.deadzone_slider.value() / 100.0
         self.config.controller.vibration = self.vibration_check.isChecked()

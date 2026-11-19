@@ -271,3 +271,56 @@ def sort_groups(
         items,
         key=lambda g: (g.sort_time, natural_key(g.display_name), g.rel_dir.casefold()),
     )
+
+
+VIEW_MODES = ("jpeg", "thumbnail", "full")
+
+
+def raw_variant_indexes(group: "PhotoGroup") -> list[int]:
+    return [index for index, variant in enumerate(group.variants) if variant.is_raw]
+
+
+def raster_variant_indexes(group: "PhotoGroup") -> list[int]:
+    return [index for index, variant in enumerate(group.variants) if not variant.is_raw]
+
+
+def available_view_modes(group: "PhotoGroup") -> list[str]:
+    """Available representations in display order (JPEG → thumb → full)."""
+    modes: list[str] = []
+    if raster_variant_indexes(group):
+        modes.append("jpeg")
+    if raw_variant_indexes(group):
+        modes.extend(["thumbnail", "full"])
+    return modes
+
+
+def resolve_view(group: "PhotoGroup", mode: str) -> tuple[int, bool, str]:
+    """Return (variant_index, full_raw_decode, effective_mode).
+
+    "jpeg" prefers a raster member of a RAW+JPEG pair and falls back to the
+    embedded RAW preview when the group has no raster file. "thumbnail" always
+    uses the RAW embedded preview. "full" demosaics the RAW.
+    """
+    raw_indexes = raw_variant_indexes(group)
+    raster_indexes = raster_variant_indexes(group)
+    if mode == "full" and raw_indexes:
+        return raw_indexes[0], True, "full"
+    if mode == "thumbnail" and raw_indexes:
+        return raw_indexes[0], False, "thumbnail"
+    if mode == "jpeg" and raster_indexes:
+        index = (
+            group.primary_index
+            if group.primary_index in raster_indexes
+            else raster_indexes[0]
+        )
+        return index, False, "jpeg"
+    if raster_indexes:
+        index = (
+            group.primary_index
+            if group.primary_index in raster_indexes
+            else raster_indexes[0]
+        )
+        return index, False, "jpeg"
+    if raw_indexes:
+        return raw_indexes[0], False, "thumbnail"
+    return group.primary_index, False, "jpeg"

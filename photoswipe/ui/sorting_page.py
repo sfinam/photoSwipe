@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 
 from ..config import Config
 from ..i18n import tr
-from ..models import PhotoGroup
+from ..models import PhotoGroup, available_view_modes, resolve_view
 from ..session import SortSession
 from ..shortcuts import display_combo
 from ..utils import format_bytes
@@ -92,6 +92,7 @@ class SortingPage(QWidget):
     first_round_requested = Signal()
     reveal_requested = Signal(str)
     fullscreen_requested = Signal()
+    view_mode_cycle_requested = Signal(str)
     error_occurred = Signal(str)
 
     def __init__(
@@ -104,7 +105,8 @@ class SortingPage(QWidget):
         self.session: SortSession | None = None
         self.current_id: str | None = None
         self.variant_index = 0
-        self.variant_choices: dict[str, int] = {}
+        self.raw_full = False
+        self.view_choices: dict[str, tuple[int, bool]] = {}
         self.rotations: dict[str, int] = {}
         self._pixmap_cache: OrderedDict[str, QPixmap] = OrderedDict()
         self._workers: set[PreviewWorker] = set()
@@ -273,6 +275,15 @@ class SortingPage(QWidget):
 
         tools = QHBoxLayout()
         tools.setSpacing(2)
+        self.display_mode_button = QPushButton("")
+        self.display_mode_button.setProperty("role", "chip")
+        self.display_mode_button.setIcon(icon("layers", theme.TEXT_MUTED, 14))
+        self.display_mode_button.setIconSize(QSize(14, 14))
+        self.display_mode_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.display_mode_button.clicked.connect(self._cycle_view_mode)
+        self.display_mode_button.hide()
+        tools.addWidget(self.display_mode_button)
+        tools.addSpacing(6)
         self.zoom_out_button = IconButton(
             "zoom-out", tr("Zoom out"), button_size=32, size=17
         )
@@ -360,6 +371,8 @@ class SortingPage(QWidget):
     def set_config(self, config: Config) -> None:
         self.config = config
         self._update_shortcut_badges()
+        if (group := self._current_group()) is not None:
+            self._update_display_button(group)
 
     def set_controller(self, name: str) -> None:
         if name:
@@ -399,7 +412,8 @@ class SortingPage(QWidget):
     def set_session(self, session: SortSession) -> None:
         self.session = session
         self.current_id = None
-        self.variant_choices = {}
+        self.raw_full = False
+        self.view_choices = {}
         self.rotations = {}
         self._completion_signature = None
         self.folder_name.setText(session.source.name)
@@ -435,6 +449,7 @@ class SortingPage(QWidget):
         self.compare_button.setEnabled(
             not busy and bool(self.session and len(self.session.queue) >= 2)
         )
+        self.display_mode_button.setEnabled(not busy)
         for widget in self.findChildren(QPushButton):
             if widget.property("role") == "chip":
                 widget.setEnabled(not busy)
@@ -457,26 +472,30 @@ class SortingPage(QWidget):
             return
         self.stack.setCurrentWidget(self.stage)
         self.action_bar.setVisible(True)
-        choice = self.variant_choices.get(current.id, current.primary_index)
+        choice, raw_full, _ = self._view_for(current)
         choice = max(0, min(choice, len(current.variants) - 1))
         group_changed = current.id != self.current_id
-        variant_changed = choice != self.variant_index
+        view_changed = choice != self.variant_index or raw_full != self.raw_full
         if group_changed:
             self.current_id = current.id
             self.variant_index = choice
+            self.raw_full = raw_full
             self._build_variant_chips(current)
             self._update_photo_info(current)
+            self._update_display_button(current)
             self.view.clear()
             self.view.set_loading(
                 tr("Opening {format}…", format=current.variants[choice].label)
             )
-            self._load_preview(current, choice)
-        elif variant_changed or force:
+            self._load_preview(current, choice, raw_full)
+        elif view_changed or force:
             self.variant_index = choice
+            self.raw_full = raw_full
             self._build_variant_chips(current)
             self._update_photo_info(current)
-            if variant_changed or not self.view.has_image:
-                self._load_preview(current, choice)
+            self._update_display_button(current)
+            if view_changed or not self.view.has_image:
+                self._load_preview(current, choice, raw_full)
         self.set_busy(self._busy)
 
     def _update_header(self) -> None:
@@ -556,11 +575,17 @@ class SortingPage(QWidget):
             return
         if index == self.variant_index:
             return
-        self.variant_choices[group.id] = index
+        variant = group.variants[index]
+        raw_full = (
+            self.config.behavior.raw_view_mode == "full" if variant.is_raw else False
+        )
+        self.view_choices[group.id] = (index, raw_full)
         self.variant_index = index
+        self.raw_full = raw_full
         self._build_variant_chips(group)
         self._update_photo_info(group)
-        self._load_preview(group, index)
+        self._update_display_button(group)
+        self._load_preview(group, index, raw_full)
         self.refresh()
 
     # ------------------------------------------------------------------
@@ -569,8 +594,74 @@ class SortingPage(QWidget):
             return None
         return self.session.queue[0]
 
-    def _load_preview(self, group: PhotoGroup, variant_index: int) -> None:
-        cache_key = f"{group.id}:{variant_index}"
+    def _view_for(self, group: PhotoGroup) -> tuple[int, bool, str]:
+        override = self.view_choices.get(group.id)
+        if override is not None:
+            index, raw_full = override
+            index = max(0, min(index, len(group.variants) - 1))
+            variant = group.variants[index]
+            effective = (
+                ("full" if raw_full else "thumbnail") if variant.is_raw else "jpeg"
+            )
+            return index, raw_full and variant.is_raw, effective
+        return resolve_view(group, self.config.behavior.raw_view_mode)
+
+    def _effective_view_mode(self, group: PhotoGroup) -> str:
+        _, _, mode = self._view_for(group)
+        return mode
+
+    def _view_mode_label(self, mode: str) -> str:
+        return {
+            "jpeg": tr("JPEG"),
+            "thumbnail": tr("RAW thumbnail"),
+            "full": tr("RAW full"),
+        }.get(mode, mode)
+
+    def _update_display_button(self, group: PhotoGroup | None) -> None:
+        if group is None:
+            self.display_mode_button.hide()
+            return
+        modes = available_view_modes(group)
+        if len(modes) < 2:
+            self.display_mode_button.hide()
+            return
+        mode = self._effective_view_mode(group)
+        self.display_mode_button.setText(self._view_mode_label(mode))
+        bindings = self.config.shortcuts.get("toggleRaw", [])
+        shortcut = display_combo(bindings[0]) if bindings else ""
+        tip = tr(
+            "Display mode: {mode}. Click to cycle between JPEG, RAW thumbnail and full RAW.",
+            mode=self._view_mode_label(mode),
+        )
+        if shortcut:
+            tip += f" ({shortcut})"
+        self.display_mode_button.setToolTip(tip)
+        self.display_mode_button.show()
+
+    def _cycle_view_mode(self) -> None:
+        group = self._current_group()
+        if not group or self._busy:
+            return
+        modes = available_view_modes(group)
+        if len(modes) < 2:
+            return
+        current = self._effective_view_mode(group)
+        try:
+            index = modes.index(current)
+        except ValueError:
+            index = -1
+        next_mode = modes[(index + 1) % len(modes)]
+        self.view_mode_cycle_requested.emit(next_mode)
+
+    def apply_view_mode(self) -> None:
+        self.view_choices.clear()
+        self.current_id = None
+        self.refresh(force=True)
+
+    def _load_preview(
+        self, group: PhotoGroup, variant_index: int, raw_full: bool = False
+    ) -> None:
+        cache_key = f"{group.id}:{variant_index}:{int(raw_full)}"
         cached = self._pixmap_cache.get(cache_key)
         if cached is not None and not cached.isNull():
             self.view.set_pixmap(cached)
@@ -585,7 +676,7 @@ class SortingPage(QWidget):
             group,
             variant_index,
             max_side=2400,
-            full_raw=self.config.behavior.raw_full_decode,
+            full_raw=raw_full,
         )
         self._workers.add(worker)
         worker.signals.finished.connect(self._preview_ready)
@@ -599,6 +690,7 @@ class SortingPage(QWidget):
         error: str,
         width: int,
         height: int,
+        full_raw: bool,
     ) -> None:
         sender = self.sender()
         for worker in list(self._workers):
@@ -606,7 +698,12 @@ class SortingPage(QWidget):
                 self._workers.discard(worker)
                 break
         group = self._current_group()
-        if not group or group.id != group_id or self.variant_index != variant_index:
+        if (
+            not group
+            or group.id != group_id
+            or self.variant_index != variant_index
+            or self.raw_full != full_raw
+        ):
             return
         self.loading_badge.hide()
         if error or not path:
@@ -627,7 +724,7 @@ class SortingPage(QWidget):
             )
             self.set_busy(self._busy)
             return
-        key = f"{group.id}:{variant_index}"
+        key = f"{group.id}:{variant_index}:{int(full_raw)}"
         self._pixmap_cache[key] = pixmap
         self._pixmap_cache.move_to_end(key)
         while len(self._pixmap_cache) > 8:
@@ -655,13 +752,13 @@ class SortingPage(QWidget):
         if len(queue) < 2:
             return
         next_group = queue[1]
-        next_index = self.variant_choices.get(next_group.id, next_group.primary_index)
+        next_index, next_full, _ = self._view_for(next_group)
         worker = PreviewWorker(
             self.preview_service,
             next_group,
             next_index,
             max_side=2400,
-            full_raw=self.config.behavior.raw_full_decode,
+            full_raw=next_full,
         )
         self._prefetch_workers.add(worker)
         worker.signals.finished.connect(
@@ -705,6 +802,8 @@ class SortingPage(QWidget):
             self.view.rotate_ccw()
         elif action == "resetView":
             self.view.reset_view()
+        elif action == "toggleRaw":
+            self._cycle_view_mode()
 
     # ------------------------------------------------------------------
     def show_completion(self) -> None:

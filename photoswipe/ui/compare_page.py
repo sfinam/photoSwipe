@@ -16,8 +16,9 @@ from PySide6.QtWidgets import (
 
 from ..config import Config
 from ..i18n import tr
-from ..models import PhotoGroup
+from ..models import PhotoGroup, resolve_view
 from ..session import SortSession
+from ..shortcuts import display_combo
 from . import theme
 from .icons import icon
 from .photo_view import PhotoView
@@ -27,6 +28,7 @@ from .workers import PreviewWorker
 
 class ComparePane(QFrame):
     choose = Signal()
+    skip = Signal()
 
     def __init__(self, letter: str, color: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -34,6 +36,7 @@ class ComparePane(QFrame):
         self.color = color
         self.group: PhotoGroup | None = None
         self.variant_index = 0
+        self.full_raw = False
         self.setProperty("role", "panel")
         self.setStyleSheet(
             f'QFrame[role="panel"] {{ background: {theme.PANEL}; border: 1px solid {theme.BORDER};'
@@ -110,6 +113,18 @@ class ComparePane(QFrame):
         hint = QLabel(tr("Winner → Favorites, the other → Trash"))
         hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.3pt;")
         footer_layout.addWidget(hint, 1)
+        self.skip_button = QPushButton(tr("Skip"))
+        self.skip_button.setProperty("role", "ghost")
+        self.skip_button.setMinimumHeight(34)
+        self.skip_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.skip_button.setToolTip(
+            tr(
+                "Skip {letter} and replace it with the next photo (Shift+←/→)",
+                letter=letter,
+            )
+        )
+        self.skip_button.clicked.connect(self.skip)
+        footer_layout.addWidget(self.skip_button)
         self.choose_button = QPushButton(tr("Choose {letter}", letter=letter))
         self.choose_button.setProperty("role", "primary")
         self.choose_button.setMinimumHeight(34)
@@ -126,9 +141,18 @@ class ComparePane(QFrame):
         self.rot_ccw.clicked.connect(self.view.rotate_ccw)
         self.rot_cw.clicked.connect(self.view.rotate_cw)
 
-    def set_group(self, group: PhotoGroup, shortcut_hint: str = "") -> None:
+    def set_group(
+        self,
+        group: PhotoGroup,
+        shortcut_hint: str = "",
+        variant_index: int | None = None,
+        full_raw: bool = False,
+    ) -> None:
         self.group = group
-        self.variant_index = group.primary_index
+        self.variant_index = (
+            group.primary_index if variant_index is None else variant_index
+        )
+        self.full_raw = full_raw
         self.name_label.setText(group.display_name)
         meta = group.meta
         bits = []
@@ -147,13 +171,16 @@ class ComparePane(QFrame):
                 tr("Choose {letter} ({hint})", letter=self.letter, hint=shortcut_hint)
             )
 
-    def set_busy(self, busy: bool) -> None:
+    def set_busy(self, busy: bool, can_skip: bool = True) -> None:
         self.choose_button.setEnabled(not busy and self.group is not None)
+        self.skip_button.setEnabled(not busy and self.group is not None and can_skip)
 
 
 class ComparePage(QWidget):
     exit_requested = Signal()
     choose_requested = Signal(str)  # left / right / both / skip
+    skip_side_requested = Signal(str)
+    view_mode_cycle_requested = Signal()
     undo_requested = Signal()
     settings_requested = Signal()
     help_requested = Signal()
@@ -211,6 +238,13 @@ class ComparePage(QWidget):
         title_box.addLayout(title_row)
         title_box.addWidget(subtitle)
         header.addLayout(title_box, 1)
+        self.view_mode_button = QPushButton("")
+        self.view_mode_button.setProperty("role", "chip")
+        self.view_mode_button.setIcon(icon("layers", theme.TEXT_MUTED, 14))
+        self.view_mode_button.setIconSize(QSize(14, 14))
+        self.view_mode_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.view_mode_button.clicked.connect(self.view_mode_cycle_requested)
+        header.addWidget(self.view_mode_button)
         self.undo_button = QPushButton(tr("Undo"))
         self.undo_button.setProperty("role", "subtle")
         self.undo_button.setIcon(icon("undo", theme.TEXT_MUTED, 16))
@@ -246,6 +280,8 @@ class ComparePage(QWidget):
         self.right = ComparePane("B", theme.VIOLET)
         self.left.choose.connect(lambda: self._choose("left"))
         self.right.choose.connect(lambda: self._choose("right"))
+        self.left.skip.connect(lambda: self._skip_side("left"))
+        self.right.skip.connect(lambda: self._skip_side("right"))
         panes.addWidget(self.left, 1)
         panes.addWidget(self.right, 1)
         pairs_layout.addLayout(panes, 1)
@@ -254,7 +290,7 @@ class ComparePage(QWidget):
         bottom.setSpacing(9)
         hint = QLabel(
             tr(
-                "← A — left   ·   → D — right   ·   Space — both   ·   S — skip   ·   Esc — exit"
+                "← A — left   ·   → D — right   ·   Shift+←/→ — skip one   ·   Space — both   ·   S — skip pair   ·   Esc — exit"
             )
         )
         hint.setStyleSheet(f"color: {theme.TEXT_DIM}; font-size: 8.4pt;")
@@ -319,6 +355,7 @@ class ComparePage(QWidget):
     # ------------------------------------------------------------------
     def set_config(self, config: Config) -> None:
         self.config = config
+        self._update_view_mode_button()
 
     def set_session(self, session: SortSession) -> None:
         self.session = session
@@ -329,10 +366,12 @@ class ComparePage(QWidget):
 
     def set_busy(self, busy: bool) -> None:
         self._busy = busy
-        self.left.set_busy(busy)
-        self.right.set_busy(busy)
+        can_skip = bool(self.session and self.session.mode == "first")
+        self.left.set_busy(busy, can_skip)
+        self.right.set_busy(busy, can_skip)
         self.both_button.setEnabled(not busy)
-        self.skip_button.setEnabled(not busy)
+        self.skip_button.setEnabled(not busy and can_skip)
+        self.view_mode_button.setEnabled(not busy)
         self.undo_button.setEnabled(
             not busy and bool(self.session and self.session.can_undo)
         )
@@ -340,14 +379,18 @@ class ComparePage(QWidget):
             Qt.CursorShape.WaitCursor if busy else Qt.CursorShape.ArrowCursor
         )
 
-    def reload(self) -> None:
+    def reload(self, force: bool = False) -> None:
         session = self.session
         if not session:
             return
+        self._update_view_mode_button()
+        if force:
+            self._loaded_pair_ids = None
         self.undo_button.setEnabled(session.can_undo and not self._busy)
         if len(session.queue) < 2:
             self.stack.setCurrentWidget(self.done_widget)
             self.pair = None
+            self._update_view_mode_button()
             if session.queue:
                 self.done_title.setText(tr("One photo left"))
                 self.done_text.setText(
@@ -372,8 +415,13 @@ class ComparePage(QWidget):
         self.stack.setCurrentWidget(self.pairs_widget)
         self.pair = (session.queue[0], session.queue[1])
         self.pair_badge.setText(tr("Pair {number}", number=self.pair_number))
-        self.left.set_group(self.pair[0], "← / A")
-        self.right.set_group(self.pair[1], "→ / D")
+        self._update_view_mode_button()
+        for pane, group, side, hint in (
+            (self.left, self.pair[0], 0, "← / A"),
+            (self.right, self.pair[1], 1, "→ / D"),
+        ):
+            index, full_raw, _ = self._resolve(group)
+            pane.set_group(group, hint, index, full_raw)
         pair_ids = (self.pair[0].id, self.pair[1].id)
         if pair_ids != self._loaded_pair_ids:
             self._loaded_pair_ids = pair_ids
@@ -385,8 +433,12 @@ class ComparePage(QWidget):
             self._load_pane(self.right, self.pair[1], 1)
         self.set_busy(self._busy)
 
+    def _resolve(self, group: PhotoGroup) -> tuple[int, bool, str]:
+        return resolve_view(group, self.config.behavior.raw_view_mode)
+
     def _load_pane(self, pane: ComparePane, group: PhotoGroup, side: int) -> None:
-        key = f"{group.id}:{group.primary_index}"
+        variant_index, full_raw, _ = self._resolve(group)
+        key = f"{group.id}:{variant_index}:{int(full_raw)}"
         cached = self._pixmap_cache.get(key)
         if cached is not None and not cached.isNull():
             pane.view.set_pixmap(cached)
@@ -396,14 +448,14 @@ class ComparePage(QWidget):
         worker = PreviewWorker(
             self.preview_service,
             group,
-            group.primary_index,
+            variant_index,
             max_side=1800,
-            full_raw=self.config.behavior.raw_full_decode,
+            full_raw=full_raw,
         )
         self._workers.add(worker)
         worker.signals.finished.connect(
-            lambda gid, vi, path, error, width, height, w=worker, p=pane, s=side: (
-                self._pane_ready(w, p, s, gid, vi, path, error)
+            lambda gid, vi, path, error, width, height, full, w=worker, p=pane, s=side: (
+                self._pane_ready(w, p, s, gid, vi, path, error, full)
             )
         )
         QThreadPool.globalInstance().start(worker)
@@ -417,12 +469,18 @@ class ComparePage(QWidget):
         variant_index: int,
         path: str,
         error: str,
+        full_raw: bool,
     ) -> None:
         self._workers.discard(worker)
         if not self.pair:
             return
         expected = self.pair[side]
-        if expected.id != group_id:
+        pane_expected = self.left if side == 0 else self.right
+        if (
+            expected.id != group_id
+            or pane_expected.variant_index != variant_index
+            or pane_expected.full_raw != full_raw
+        ):
             return
         if error or not path:
             pane.view.set_error(tr("Could not open the photo"))
@@ -432,7 +490,7 @@ class ComparePage(QWidget):
         if pixmap.isNull():
             pane.view.set_error(tr("Could not load preview"))
             return
-        key = f"{group_id}:{variant_index}"
+        key = f"{group_id}:{variant_index}:{int(full_raw)}"
         self._pixmap_cache[key] = pixmap
         self._pixmap_cache.move_to_end(key)
         while len(self._pixmap_cache) > 6:
@@ -445,6 +503,57 @@ class ComparePage(QWidget):
         if self._busy or not self.pair:
             return
         self.choose_requested.emit(choice)
+
+    def _skip_side(self, side: str) -> None:
+        if self._busy or not self.pair:
+            return
+        if not self.session or self.session.mode != "first":
+            return
+        self.skip_side_requested.emit(side)
+
+    def replace_side(self, side: str, new_group: PhotoGroup) -> None:
+        if not self.pair:
+            return
+        left, right = self.pair
+        if side == "left":
+            self.pair = (new_group, right)
+            pane = self.left
+            hint = "← / A"
+        else:
+            self.pair = (left, new_group)
+            pane = self.right
+            hint = "→ / D"
+        index, full_raw, _ = self._resolve(new_group)
+        pane.set_group(new_group, hint, index, full_raw)
+        self._update_view_mode_button()
+        pane.view.clear()
+        pane.view.set_loading(tr("Loading…"))
+        self._loaded_pair_ids = (self.pair[0].id, self.pair[1].id)
+        self._load_pane(pane, new_group, 0 if side == "left" else 1)
+        self.set_busy(self._busy)
+
+    def _update_view_mode_button(self) -> None:
+        if not hasattr(self, "view_mode_button"):
+            return
+        if not self.pair or not any(group.has_raw for group in self.pair):
+            self.view_mode_button.hide()
+            return
+        self.view_mode_button.show()
+        mode = getattr(self.config.behavior, "raw_view_mode", "jpeg")
+        labels = {
+            "jpeg": tr("JPEG"),
+            "thumbnail": tr("RAW thumbnail"),
+            "full": tr("RAW full"),
+        }
+        self.view_mode_button.setText(labels.get(mode, mode))
+        bindings = self.config.shortcuts.get("toggleRaw", [])
+        tip = tr(
+            "Display mode: {mode}. Click to cycle between JPEG, RAW thumbnail and full RAW.",
+            mode=labels.get(mode, mode),
+        )
+        if bindings:
+            tip += f" ({display_combo(bindings[0])})"
+        self.view_mode_button.setToolTip(tip)
 
     def pair_groups(self) -> tuple[PhotoGroup, PhotoGroup] | None:
         return self.pair

@@ -30,6 +30,7 @@ SHORTCUT_ACTIONS = (
     "round2",
     "undo",
     "compare",
+    "toggleRaw",
     "zoomIn",
     "zoomOut",
     "rotateCw",
@@ -59,6 +60,7 @@ DEFAULT_SHORTCUTS: dict[str, list[str]] = {
     "round2": ["ArrowUp", "KeyW"],
     "undo": ["KeyZ"],
     "compare": ["KeyC"],
+    "toggleRaw": ["KeyT"],
     "zoomIn": ["Equal", "NumpadAdd"],
     "zoomOut": ["Minus", "NumpadSubtract"],
     "rotateCw": ["KeyR"],
@@ -344,16 +346,19 @@ class Behavior:
     sort_by: str = "date"  # date | name
     recursive_default: bool = True
     animations: bool = True
-    raw_full_decode: bool = False
+    raw_view_mode: str = "jpeg"  # jpeg | thumbnail | full
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any] | None) -> "Behavior":
         raw = raw or {}
+        mode = raw.get("raw_view_mode")
+        if mode not in {"jpeg", "thumbnail", "full"}:
+            mode = "full" if raw.get("raw_full_decode") is True else "jpeg"
         return cls(
             sort_by="name" if raw.get("sort_by") == "name" else "date",
             recursive_default=raw.get("recursive_default", True) is not False,
             animations=raw.get("animations", True) is not False,
-            raw_full_decode=raw.get("raw_full_decode", False) is True,
+            raw_view_mode=mode,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -361,7 +366,7 @@ class Behavior:
             "sort_by": self.sort_by,
             "recursive_default": self.recursive_default,
             "animations": self.animations,
-            "raw_full_decode": self.raw_full_decode,
+            "raw_view_mode": self.raw_view_mode,
         }
 
 

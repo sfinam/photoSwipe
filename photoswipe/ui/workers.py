@@ -13,8 +13,8 @@ from ..config import Source
 
 class PreviewSignals(QObject):
     finished = Signal(
-        str, int, str, str, int, int
-    )  # group id, variant, path, error, width, height
+        str, int, str, str, int, int, bool
+    )  # group id, variant, path, error, width, height, full_raw
 
 
 class PreviewWorker(QRunnable):
@@ -59,12 +59,19 @@ class PreviewWorker(QRunnable):
                 "",
                 result.width,
                 result.height,
+                self.full_raw,
             )
         except Exception as error:  # noqa: BLE001 - shown to the user
             if self.cancelled.is_set():
                 return
             self.signals.finished.emit(
-                self.group.id, self.variant_index, "", str(error), 0, 0
+                self.group.id,
+                self.variant_index,
+                "",
+                str(error),
+                0,
+                0,
+                self.full_raw,
             )
 
 

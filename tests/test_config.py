@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from photoswipe.config import (
+    Behavior,
     Config,
     ConfigStore,
     Destinations,
@@ -25,6 +26,9 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(source.id, source_id(self.ws.base))
         self.assertEqual(source.id, Source.create(self.ws.base).id)
 
+    def test_raw_display_shortcut_default(self) -> None:
+        self.assertEqual(Config().shortcuts["toggleRaw"], ["KeyT"])
+
     def test_canonical_combo(self) -> None:
         self.assertEqual(canonical_combo("Shift+KeyR"), "Shift+KeyR")
         self.assertEqual(canonical_combo("KeyD"), "KeyD")
@@ -32,6 +36,16 @@ class ConfigTests(unittest.TestCase):
             canonical_combo("Hyper+KeyA")
         with self.assertRaises(ValueError):
             canonical_combo("KeyA+KeyB")
+
+    def test_raw_view_mode_migrates_from_legacy_flag(self) -> None:
+        self.assertEqual(
+            Behavior.from_dict({"raw_full_decode": True}).raw_view_mode, "full"
+        )
+        self.assertEqual(
+            Behavior.from_dict({"raw_view_mode": "thumbnail"}).raw_view_mode,
+            "thumbnail",
+        )
+        self.assertEqual(Behavior.from_dict({}).raw_view_mode, "jpeg")
 
     def test_destinations_beside_and_custom(self) -> None:
         source = Source.create(self.ws.base, name="Свадьба")

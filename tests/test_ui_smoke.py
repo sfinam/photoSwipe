@@ -7,6 +7,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtWidgets import QApplication
 
+import shutil
+
 from photoswipe.config import Config, ConfigStore
 from photoswipe.session import SessionManager
 from photoswipe.ui.main_window import MainWindow
@@ -26,6 +28,34 @@ class UiSmokeTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.ws.cleanup()
+
+    def test_compare_skip_replaces_only_one_side(self) -> None:
+        shutil.copy2(self.root / "A7309498.JPG", self.root / "IMG_0002.JPG")
+        shutil.copy2(self.root / "A7309498.JPG", self.root / "IMG_0003.JPG")
+        config = Config()
+        source = config.add_source(self.root, recursive=False)
+        store = ConfigStore(self.ws.base / "skip-config.json")
+        store.save(config)
+        manager = SessionManager(store)
+        window = MainWindow()
+        window.show()
+        session = manager.open(source)
+        window.current_source = source
+        window.current_session = session
+        window.sorting_page.set_session(session)
+        window.stack.setCurrentWidget(window.sorting_page)
+        window.open_compare()
+        self.app.processEvents()
+        before_left, before_right = window.compare_page.pair
+        window._compare_skip_side("left")
+        self.app.processEvents()
+        self.assertEqual(session.deferred_count, 1)
+        self.assertEqual(len(session.queue), 2)
+        new_left, new_right = window.compare_page.pair
+        self.assertEqual(new_right.id, before_right.id)
+        self.assertNotEqual(new_left.id, before_left.id)
+        window.close()
+        self.app.processEvents()
 
     def test_window_builds_and_shows_first_pair(self) -> None:
         config = Config()

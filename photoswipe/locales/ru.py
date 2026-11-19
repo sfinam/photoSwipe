@@ -320,3 +320,36 @@ TRANSLATIONS: dict[str, str] = {
     "Could not open folder: {path}": "Не удалось открыть папку: {path}",
     "Gamepad disconnected": "Геймпад отключён",
 }
+
+TRANSLATIONS.update(
+    {
+        "RAW display": "Отображение RAW",
+        "Cycle JPEG, RAW thumbnail and full RAW": "Переключать JPEG, RAW-превью и полный RAW",
+        "JPEG": "JPEG",
+        "RAW thumbnail": "RAW-превью",
+        "RAW full": "Полный RAW",
+        "Display mode: {mode}. Click to cycle between JPEG, RAW thumbnail and full RAW.": "Режим отображения: {mode}. Нажмите, чтобы переключать JPEG, RAW-превью и полный RAW.",
+        "JPEG from the RAW+JPEG pair": "JPEG из пары RAW+JPEG",
+        "RAW preview (embedded thumbnail)": "RAW-превью (встроенный thumbnail)",
+        "Full RAW decode (LibRaw)": "Полное декодирование RAW (LibRaw)",
+        "JPEG uses the paired JPEG when available and the embedded RAW preview otherwise. RAW thumbnail always uses the camera preview. Full decode gives more detail but is noticeably slower.": "JPEG использует парный JPEG, если он есть, иначе встроенное RAW-превью. «RAW-превью» всегда показывает превью камеры. Полное декодирование даёт больше деталей, но заметно медленнее.",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "Skip": "Пропустить",
+        "Skip {letter} and replace it with the next photo (Shift+←/→)": "Пропустить {letter} и заменить следующим фото (Shift+←/→)",
+        "{letter} deferred to the second round": "{letter} отложено на второй раунд",
+        "Skipping is not available in the second round": "Во втором раунде пропуск недоступен",
+        "Display mode: {mode}": "Режим отображения: {mode}",
+        "← A — left   ·   → D — right   ·   Shift+←/→ — skip one   ·   Space — both   ·   S — skip pair   ·   Esc — exit": "← A — левая   ·   → D — правая   ·   Shift+←/→ — пропустить одну   ·   Пробел — обе   ·   S — пропустить пару   ·   Esc — выйти",
+    }
+)
+
+TRANSLATIONS.update(
+    {
+        "In comparison mode: ← / A chooses the left shot, → / D the right one, Shift+← / Shift+→ skips only that photo and replaces it with the next one in the queue, Space keeps both as favorites, S defers the pair, Esc exits.": "В режиме сравнения: ← / A — выбрать левую, → / D — правую, Shift+← / Shift+→ — пропустить только это фото и заменить его следующим в очереди, Пробел — обе в избранное, S — отложить пару, Esc — выйти.",
+        "Files with the same name and different extensions are treated as one photo. You can switch between ARW and JPEG for viewing, but a decision applies to the whole pair, including XMP and other sidecar files. Press T or use the RAW display button to cycle between the paired JPEG, the embedded RAW preview and a full RAW decode.": "Файлы с одинаковым именем и разными расширениями считаются одной фотографией. Можно переключать ARW и JPEG для просмотра, но решение применяется ко всей паре, включая XMP и другие sidecar-файлы. Нажмите T или кнопку отображения RAW, чтобы переключать парный JPEG, встроенное RAW-превью и полное декодирование RAW.",
+    }
+)

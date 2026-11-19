@@ -21,6 +21,7 @@ Um **aplicativo de desktop** rápido para selecionar fotos: percorra uma pasta, 
 ## Recursos
 
 - **Idiomas da interface:** inglês, russo e português (Brasil). Escolha em **Configurações → Geral** ou pelo botão de globo no cabeçalho da Biblioteca.
+- **Modo portátil no Windows:** mantenha configurações, sessões e cache ao lado do executável em um pendrive.
 - Revisão em janela cheia com uma interface escura e sem distrações.
 - Quatro decisões: **Favorito**, **Lixeira**, **Talvez** e **Segunda rodada**.
 - Deslizes com mouse/toque, atalhos totalmente configuráveis e controle (gamepad).
@@ -58,6 +59,23 @@ py -3.12 -m venv .venv
 pip install .
 photoswipe
 ```
+
+### Windows portátil / pendrive
+
+1. Compile `PhotoSwipe.exe` no Windows (veja a seção de build autônomo) ou copie uma compilação existente.
+2. Coloque o executável em uma pasta própria.
+3. Crie um arquivo vazio chamado `portable.flag` ao lado de `PhotoSwipe.exe`. Outra opção é copiar `packaging/portable.bat` para a pasta e iniciar por ele.
+4. Abra o aplicativo. Configurações, sessões, histórico de desfazer e cache de prévias ficam em `PhotoSwipeData`, ao lado do executável.
+
+Também é possível iniciar explicitamente:
+
+```powershell
+PhotoSwipe.exe --portable
+```
+
+A pasta fica autossuficiente — pode ser movida para outro PC ou pendrive junto com `PhotoSwipeData`. Excluir `PhotoSwipeData` redefine o estado e o cache, mas não toca nas suas fotos. A variável `PHOTOSWIPE_DATA_DIR` continua funcionando como override manual.
+
+Depois de compilar no Windows, `packaging/make_portable_windows.ps1` cria a pasta `dist\PhotoSwipePortable` pronta para copiar, com o executável, o marcador e o launcher.
 
 ### Executar a partir do código
 
@@ -114,6 +132,7 @@ A interface, os diálogos, as datas, as mensagens de erro, a ajuda dos atalhos e
 | Segunda rodada | `↑` ou `W` |
 | Desfazer | `Z` |
 | Comparar | `C` |
+| Exibição RAW: JPEG → prévia → completo | `T` |
 | Aproximar / afastar | `+` / `−` |
 | Girar à direita / à esquerda | `R` / `Shift + R` |
 | Redefinir visualização | `0` |
@@ -161,17 +180,24 @@ Clique em **Comparar** ou pressione `C`. O PhotoSwipe pega as duas primeiras fot
 
 - `←` / `A` — a foto da esquerda vence;
 - `→` / `D` — a foto da direita vence;
+- `Shift + ←` / `Shift + →` — pula apenas essa foto, adia para a segunda rodada e coloca a próxima da fila no lugar;
 - `Espaço` — manter as duas em Favoritos;
 - `S` — adiar o par para a segunda rodada;
 - `Esc` / `C` — sair.
 
-A vencedora vai para Favoritos e a outra para a Lixeira. Isso é um único passo de desfazer. O próximo par abre automaticamente enquanto houver pelo menos duas fotos.
+A vencedora vai para Favoritos e a outra para a Lixeira. Isso é um único passo de desfazer. O próximo par abre automaticamente enquanto houver pelo menos duas fotos. O pulo de apenas uma foto também é um único passo de desfazer e fica disponível na primeira passagem; na segunda rodada as duas fotos precisam de uma decisão final.
 
 ## RAW e JPEG
 
 Arquivos com o mesmo nome e extensões diferentes na mesma pasta (`A7309498.ARW` + `A7309498.JPG`) formam um único cartão. Os chips de formato no cabeçalho alternam a prévia, mas as decisões valem para o grupo inteiro e seus sidecars.
 
-Arquivos RAW usam a prévia JPEG embutida da câmera por padrão — rápido e suficiente para a seleção. Ative **Decodificar RAW por completo ao visualizar** nas Configurações para revelar pelo LibRaw; há mais detalhes, mas é bem mais lento. Limpe o cache de prévias em **Configurações → RAW e cache**.
+A exibição RAW pode ser alternada com o botão **Exibição RAW** no visualizador ou com `T`. Os modos se alternam entre:
+
+1. **JPEG do par RAW+JPEG** — mais rápido; usa a prévia RAW embutida quando não há JPEG.
+2. **Prévia RAW** — sempre usa a miniatura embutida da câmera.
+3. **RAW completo** — revela pelo LibRaw para obter o máximo de detalhes, bem mais lento.
+
+A mesma opção está em **Configurações → RAW → Exibição RAW** e também é usada na comparação. Limpe o cache em **Configurações → RAW e cache**.
 
 Os formatos suportados incluem:
 
@@ -234,7 +260,7 @@ python -m unittest discover -s tests -t . -v
 python -m photoswipe
 ```
 
-Os testes usam os arquivos reais `A7309498.ARW` e `A7309498.JPG` na raiz do repositório: agrupamento, metadados, prévia RAW, movimentação, sidecars, segunda rodada, desfazer, troca de idioma e inicialização da interface. A suíte tem 30 testes.
+Os testes usam os arquivos reais `A7309498.ARW` e `A7309498.JPG` na raiz do repositório: agrupamento, metadados, modos de exibição RAW, prévias, movimentação, sidecars, pulo de uma foto na comparação, segunda rodada, desfazer, troca de idioma, caminhos portáteis e inicialização da interface. A suíte tem 36 testes.
 
 ### Build autônomo
 
@@ -256,7 +282,7 @@ pipx install .
 
 - O pareamento RAW+JPEG funciona dentro da mesma pasta. Se RAW e JPEG estiverem em subpastas diferentes, serão cartões separados.
 - Arquivos RAW sem prévia embutida são decodificados pelo LibRaw; a primeira prévia de um lote grande pode demorar.
-- A comparação sempre usa as duas primeiras fotos da fila atual; não há seleção arbitrária de par.
+- A comparação usa as duas primeiras fotos da fila atual; não há seleção arbitrária de par. Pular uma das partes coloca a próxima foto da fila no lugar.
 - Mover para outro disco pode demorar — o aplicativo aguarda a operação terminar para não perder arquivos.
 - Ainda não há classificações por estrelas, etiquetas coloridas ou busca por metadados — apenas a seleção.
 

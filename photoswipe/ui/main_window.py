@@ -212,6 +212,7 @@ class MainWindow(QMainWindow):
         self.sorting_page.settings_requested.connect(self.open_settings)
         self.sorting_page.help_requested.connect(self.open_help)
         self.sorting_page.compare_requested.connect(self.open_compare)
+        self.sorting_page.view_mode_cycle_requested.connect(self._set_raw_view_mode)
         self.sorting_page.decision_requested.connect(self._on_decision)
         self.sorting_page.undo_requested.connect(self._undo)
         self.sorting_page.next_round_requested.connect(self._next_round)
@@ -224,6 +225,10 @@ class MainWindow(QMainWindow):
 
         self.compare_page.exit_requested.connect(self.exit_compare)
         self.compare_page.choose_requested.connect(self._compare_choose)
+        self.compare_page.skip_side_requested.connect(self._compare_skip_side)
+        self.compare_page.view_mode_cycle_requested.connect(
+            self._cycle_global_view_mode
+        )
         self.compare_page.undo_requested.connect(self._undo)
         self.compare_page.settings_requested.connect(self.open_settings)
         self.compare_page.help_requested.connect(self.open_help)
@@ -419,11 +424,49 @@ class MainWindow(QMainWindow):
         if self.current_source:
             self.setWindowTitle(f"PhotoSwipe — {self.current_source.name}")
 
+    def _compare_skip_side(self, side: str) -> None:
+        if self._busy or not self.current_session:
+            return
+        pair = self.compare_page.pair_groups()
+        if not pair:
+            return
+        if self.current_session.mode != "first":
+            self.toast.show_message(
+                tr("Skipping is not available in the second round"),
+                "info",
+            )
+            return
+        group = pair[0] if side == "left" else pair[1]
+        letter = "A" if side == "left" else "B"
+        self._set_busy(True)
+        try:
+            self.current_session.decide([group], ["round2"])
+        except SessionError as error:
+            self._set_busy(False)
+            self.toast.show_message(str(error), "error", 5000)
+            return
+        self._set_busy(False)
+        if len(self.current_session.queue) >= 2:
+            self.compare_page.replace_side(side, self.current_session.queue[1])
+        else:
+            self.compare_page.reload(force=True)
+        if self.config.controller.vibration:
+            self.controller.rumble()
+        self.toast.show_message(
+            tr("{letter} deferred to the second round", letter=letter), "info"
+        )
+
     def _compare_choose(self, choice: str) -> None:
         if self._busy or not self.current_session:
             return
         pair = self.compare_page.pair_groups()
         if not pair:
+            return
+        if choice == "skip" and self.current_session.mode != "first":
+            self.toast.show_message(
+                tr("Skipping is not available in the second round"),
+                "info",
+            )
             return
         if choice == "left":
             groups, verdicts = list(pair), ["favorite", "trash"]
@@ -502,8 +545,44 @@ class MainWindow(QMainWindow):
         self._replacement_window = new_window
         self.close()
 
+    def _view_mode_label(self, mode: str) -> str:
+        return {
+            "jpeg": tr("JPEG"),
+            "thumbnail": tr("RAW thumbnail"),
+            "full": tr("RAW full"),
+        }.get(mode, mode)
+
+    def _set_raw_view_mode(self, mode: str) -> None:
+        if mode not in {"jpeg", "thumbnail", "full"}:
+            return
+        if self.config.behavior.raw_view_mode == mode:
+            return
+        self.config.behavior.raw_view_mode = mode
+        self._save_config()
+        if self._in_compare:
+            self.compare_page.reload(force=True)
+        else:
+            self.sorting_page.apply_view_mode()
+        self.toast.show_message(
+            tr(
+                "Display mode: {mode}",
+                mode=self._view_mode_label(mode),
+            ),
+            "info",
+            1800,
+        )
+
+    def _cycle_global_view_mode(self) -> None:
+        order = ["jpeg", "thumbnail", "full"]
+        try:
+            index = order.index(self.config.behavior.raw_view_mode)
+        except ValueError:
+            index = -1
+        self._set_raw_view_mode(order[(index + 1) % len(order)])
+
     def open_settings(self) -> None:
         old_language = self.config.language
+        old_raw_mode = self.config.behavior.raw_view_mode
         dialog = SettingsDialog(
             self.config,
             preview_service=self.preview_service,
@@ -534,7 +613,12 @@ class MainWindow(QMainWindow):
             )
         self._refresh_library()
         self.toast.show_message(tr("Settings saved"), "success")
-        if self.stack.currentWidget() is self.sorting_page:
+        if self.config.behavior.raw_view_mode != old_raw_mode:
+            if self._in_compare:
+                self.compare_page.reload(force=True)
+            else:
+                self.sorting_page.apply_view_mode()
+        elif self.stack.currentWidget() is self.sorting_page:
             self.sorting_page.refresh(force=True)
 
     def open_help(self) -> None:
@@ -724,6 +808,9 @@ class MainWindow(QMainWindow):
         key = event.key()
         combo = event_to_combo(event)
         if self._in_compare:
+            if combo and self.config.shortcut_for(combo) == "toggleRaw":
+                self._cycle_global_view_mode()
+                return True
             if key == Qt.Key.Key_Escape:
                 if self._fullscreen:
                     self.toggle_fullscreen()
@@ -732,6 +819,12 @@ class MainWindow(QMainWindow):
                 return True
             if combo == "KeyC":
                 self.exit_compare()
+                return True
+            if combo == "Shift+ArrowLeft":
+                self._compare_skip_side("left")
+                return True
+            if combo == "Shift+ArrowRight":
+                self._compare_skip_side("right")
                 return True
             if combo in {"ArrowLeft", "KeyA"}:
                 self._compare_choose("left")
