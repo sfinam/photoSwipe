@@ -79,6 +79,60 @@ A pasta fica autossuficiente — pode ser movida para outro PC ou pendrive junto
 
 Depois de compilar no Windows, `packaging/make_portable_windows.ps1` cria a pasta `dist\PhotoSwipePortable` pronta para copiar, com o executável, o marcador e o launcher.
 
+### Steam Deck / AppImage
+
+Compile o AppImage em uma máquina **Linux x86_64** (o SteamOS executa o AppImage, mas compilar é mais fácil em um Linux comum ou contêiner). O script precisa do virtualenv do projeto com PyInstaller, `curl` e `mksquashfs`; se o `appimagetool` não estiver no `PATH`, ele é baixado para `build/tools`.
+
+```bash
+./packaging/build_appimage.sh
+```
+
+O resultado é:
+
+```text
+dist/PhotoSwipe-x86_64.AppImage
+```
+
+#### Instalar no Steam Deck
+
+1. Alterne o Deck para o **Modo Desktop**.
+2. Copie o AppImage para a pasta inicial, por exemplo `~/Applications/`.
+3. Torne-o executável e inicie:
+
+```bash
+mkdir -p ~/Applications
+cp PhotoSwipe-x86_64.AppImage ~/Applications/
+chmod +x ~/Applications/PhotoSwipe-x86_64.AppImage
+~/Applications/PhotoSwipe-x86_64.AppImage
+```
+
+Se o AppImage informar que falta FUSE/libfuse2, execute no modo de extração:
+
+```bash
+APPIMAGE_EXTRACT_AND_RUN=1 ~/Applications/PhotoSwipe-x86_64.AppImage
+```
+
+#### Adicionar ao Steam
+
+1. No Modo Desktop, abra Steam → **Jogos → Adicionar um jogo não Steam → Procurar**.
+2. Selecione `~/Applications/PhotoSwipe-x86_64.AppImage`.
+3. Em **Propriedades → Compatibilidade**, deixe o Proton desativado — é um aplicativo Linux nativo.
+4. Se o FUSE não estiver disponível, defina **Opções de inicialização**:
+
+```text
+APPIMAGE_EXTRACT_AND_RUN=1 %command%
+```
+
+5. Para abrir uma pasta diretamente, acrescente o caminho após o comando:
+
+```text
+%command% "/home/deck/Pictures"
+```
+
+6. Volte ao Modo Jogo e inicie o PhotoSwipe pela biblioteca.
+
+O controle funciona pelo suporte integrado a gamepads. Os atalhos de teclado só ficam disponíveis com um teclado físico; use o Modo Desktop para a configuração inicial das pastas.
+
 ### Abrir uma pasta pelo gerenciador de arquivos
 
 O PhotoSwipe aceita uma pasta como argumento de linha de comando, adiciona-a à biblioteca e abre imediatamente:

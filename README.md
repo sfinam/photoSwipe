@@ -79,6 +79,60 @@ The folder is then self-contained — move it to another PC or USB drive with th
 
 After building on Windows, `packaging/make_portable_windows.ps1` creates a ready-to-copy `dist\PhotoSwipePortable` folder with the executable, data marker, and launcher.
 
+### Steam Deck / AppImage
+
+Build the AppImage on an **x86_64 Linux** machine (SteamOS can run it, but building is easier on a regular Linux install or in a container). The build script needs the project virtualenv with PyInstaller, `curl`, and `mksquashfs`; it downloads `appimagetool` into `build/tools` if it is not already on `PATH`.
+
+```bash
+./packaging/build_appimage.sh
+```
+
+The result is:
+
+```text
+dist/PhotoSwipe-x86_64.AppImage
+```
+
+#### Install on the Steam Deck
+
+1. Switch the Deck to **Desktop Mode**.
+2. Copy the AppImage to your home folder, for example `~/Applications/`.
+3. Make it executable and start it:
+
+```bash
+mkdir -p ~/Applications
+cp PhotoSwipe-x86_64.AppImage ~/Applications/
+chmod +x ~/Applications/PhotoSwipe-x86_64.AppImage
+~/Applications/PhotoSwipe-x86_64.AppImage
+```
+
+If the AppImage reports a missing FUSE/libfuse2 library, run it in extract-and-run mode:
+
+```bash
+APPIMAGE_EXTRACT_AND_RUN=1 ~/Applications/PhotoSwipe-x86_64.AppImage
+```
+
+#### Add to Steam
+
+1. In Desktop Mode, open Steam → **Games → Add a Non-Steam Game → Browse**.
+2. Select `~/Applications/PhotoSwipe-x86_64.AppImage`.
+3. Open its **Properties → Compatibility** and leave Proton disabled — this is a native Linux app.
+4. If FUSE is unavailable, set **Launch Options** to:
+
+```text
+APPIMAGE_EXTRACT_AND_RUN=1 %command%
+```
+
+5. To open a folder directly, add its path after the command, for example:
+
+```text
+%command% "/home/deck/Pictures"
+```
+
+6. Switch to Gaming Mode and launch PhotoSwipe from your library.
+
+The gamepad works through the controller support. Keyboard shortcuts are only available with a physical keyboard; use Desktop Mode for the initial folder setup and folder picker.
+
 ### Open a folder from the file manager
 
 PhotoSwipe accepts a folder as a command-line argument, adds it to the library, and opens it immediately:

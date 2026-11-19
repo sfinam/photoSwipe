@@ -79,6 +79,60 @@ PhotoSwipe.exe --portable
 
 После сборки на Windows скрипт `packaging/make_portable_windows.ps1` создаёт готовую к копированию папку `dist\PhotoSwipePortable` с `.exe`, маркером данных и ярлыком запуска.
 
+### Steam Deck / AppImage
+
+Собирайте AppImage на **x86_64 Linux** (SteamOS умеет запускать AppImage, но для сборки удобнее обычный Linux или контейнер). Нужны виртуальное окружение проекта с PyInstaller, `curl` и `mksquashfs`; если `appimagetool` нет в `PATH`, скрипт скачает его в `build/tools`.
+
+```bash
+./packaging/build_appimage.sh
+```
+
+Результат:
+
+```text
+dist/PhotoSwipe-x86_64.AppImage
+```
+
+#### Установка на Steam Deck
+
+1. Переключите Deck в **режим рабочего стола**.
+2. Скопируйте AppImage в домашнюю папку, например `~/Applications/`.
+3. Сделайте файл исполняемым и запустите:
+
+```bash
+mkdir -p ~/Applications
+cp PhotoSwipe-x86_64.AppImage ~/Applications/
+chmod +x ~/Applications/PhotoSwipe-x86_64.AppImage
+~/Applications/PhotoSwipe-x86_64.AppImage
+```
+
+Если AppImage сообщает об отсутствии FUSE/libfuse2, запустите его в режиме извлечения:
+
+```bash
+APPIMAGE_EXTRACT_AND_RUN=1 ~/Applications/PhotoSwipe-x86_64.AppImage
+```
+
+#### Добавление в Steam
+
+1. В режиме рабочего стола откройте Steam → **Игры → Добавить стороннюю игру → Обзор**.
+2. Выберите `~/Applications/PhotoSwipe-x86_64.AppImage`.
+3. В **Свойства → Совместимость** не включайте Proton — это нативное Linux-приложение.
+4. Если FUSE недоступен, задайте **Параметры запуска**:
+
+```text
+APPIMAGE_EXTRACT_AND_RUN=1 %command%
+```
+
+5. Чтобы сразу открыть папку, добавьте путь после команды:
+
+```text
+%command% "/home/deck/Pictures"
+```
+
+6. Переключитесь в игровой режим и запустите PhotoSwipe из библиотеки.
+
+Геймпад работает через встроенную поддержку контроллеров. Горячие клавиши доступны только с физической клавиатурой; для первичной настройки папок удобнее режим рабочего стола.
+
 ### Открытие папки из файлового менеджера
 
 PhotoSwipe принимает папку аргументом командной строки, добавляет её в библиотеку и сразу открывает:
