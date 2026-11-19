@@ -79,6 +79,64 @@ A pasta fica autossuficiente — pode ser movida para outro PC ou pendrive junto
 
 Depois de compilar no Windows, `packaging/make_portable_windows.ps1` cria a pasta `dist\PhotoSwipePortable` pronta para copiar, com o executável, o marcador e o launcher.
 
+### Abrir uma pasta pelo gerenciador de arquivos
+
+O PhotoSwipe aceita uma pasta como argumento de linha de comando, adiciona-a à biblioteca e abre imediatamente:
+
+```text
+PhotoSwipe.exe "D:\Fotos\2026-05"
+photoswipe /home/me/Pictures/2026-05
+```
+
+É isso que permite usar **Abrir com PhotoSwipe** no Explorer, Nautilus, Dolphin e outros gerenciadores.
+
+#### Menu de contexto do Windows
+
+1. Use o `PhotoSwipe.exe` compilado e copie o caminho dele.
+2. Abra [packaging/windows-open-with-photoswipe.reg](packaging/windows-open-with-photoswipe.reg), substitua todos os `C:\\Path\\To\\PhotoSwipe.exe` pelo caminho real e salve. No `.reg`, as barras invertidas são duplicadas — é a sintaxe do registro.
+3. Dê um duplo clique no `.reg` e confirme a importação.
+4. Clique com o botão direito em uma pasta → **Abrir com PhotoSwipe**. A opção também aparece no fundo vazio dentro da pasta.
+
+O arquivo adiciona chaves apenas para o usuário atual (não exige administrador):
+
+```text
+HKEY_CURRENT_USER\Software\Classes\Directory\shell\PhotoSwipe\command
+HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PhotoSwipe\command
+```
+
+A chave da pasta usa `%1`; a do fundo usa `%V`. No Windows 11, a opção pode ficar em **Mostrar mais opções**.
+
+Para remover, apague as chaves `PhotoSwipe` em `HKEY_CURRENT_USER\Software\Classes\Directory\shell` e `...\Directory\Background\shell`.
+
+Se executar a partir de um ambiente Python em vez do `.exe`, use o `pythonw.exe` desse ambiente com `-m photoswipe "%1"`, por exemplo:
+
+```text
+"C:\Projects\photoSwipe\.venv\Scripts\pythonw.exe" -m photoswipe "%1"
+```
+
+#### Gerenciador de arquivos no Linux
+
+1. Copie [packaging/photoswipe.desktop](packaging/photoswipe.desktop) para `~/.local/share/applications/photoswipe.desktop`.
+2. Defina `Exec` com o comando real, por exemplo `Exec=/opt/PhotoSwipe/PhotoSwipe %f` ou `Exec=/home/me/photoSwipe/.venv/bin/photoswipe %f`, e `Icon` com o caminho do ícone.
+3. Execute:
+
+```bash
+update-desktop-database ~/.local/share/applications
+```
+
+4. Clique com o botão direito na pasta → **Abrir com** → **PhotoSwipe**. Alguns gerenciadores chamam de **Outro aplicativo**.
+
+Se o gerenciador não oferecer aplicativos para pastas, use o script opcional do Nautilus:
+
+```bash
+mkdir -p ~/.local/share/nautilus/scripts
+cp packaging/nautilus-open-with-photoswipe.sh \
+  ~/.local/share/nautilus/scripts/"Open with PhotoSwipe"
+chmod +x ~/.local/share/nautilus/scripts/"Open with PhotoSwipe"
+```
+
+Edite a linha `exec` do script copiado para apontar para o PhotoSwipe. O script aparece no menu de contexto **Scripts**.
+
 ### Executar a partir do código
 
 ```bash

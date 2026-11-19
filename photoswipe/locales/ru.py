@@ -391,3 +391,9 @@ TRANSLATIONS.update(
         "Fullscreen hides every control except the Exit fullscreen button. Esc or F exits, and all shortcuts keep working.": "Полноэкранный режим скрывает всё, кроме кнопки выхода. Esc или F выходят, а все горячие клавиши продолжают работать.",
     }
 )
+
+TRANSLATIONS.update(
+    {
+        "Folder not found: {path}": "Папка не найдена: {path}",
+    }
+)

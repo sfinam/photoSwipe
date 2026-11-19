@@ -17,6 +17,11 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="Folder for settings, sessions and cache (system location by default)",
     )
     parser.add_argument(
+        "folder",
+        nargs="?",
+        help="Folder to add and open on startup",
+    )
+    parser.add_argument(
         "--portable",
         action="store_true",
         help="Keep settings and cache next to the executable in PhotoSwipeData",
@@ -50,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.portable or (portable_root() / "portable.flag").is_file():
         os.environ.setdefault("PHOTOSWIPE_DATA_DIR", str(portable_data_dir()))
 
-    from PySide6.QtCore import Qt
+    from PySide6.QtCore import Qt, QTimer
     from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -104,6 +109,8 @@ def main(argv: list[str] | None = None) -> int:
     sys.excepthook = exception_hook
     window = MainWindow()
     window.show()
+    if args.folder:
+        QTimer.singleShot(0, lambda: window.open_folder(args.folder))
     return app.exec()
 
 

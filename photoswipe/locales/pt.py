@@ -391,3 +391,9 @@ TRANSLATIONS.update(
         "Fullscreen hides every control except the Exit fullscreen button. Esc or F exits, and all shortcuts keep working.": "A tela cheia oculta todos os controles, exceto o botão Sair da tela cheia. Esc ou F saem, e todos os atalhos continuam funcionando.",
     }
 )
+
+TRANSLATIONS.update(
+    {
+        "Folder not found: {path}": "Pasta não encontrada: {path}",
+    }
+)

@@ -1,0 +1,20 @@
+Windows Registry Editor Version 5.00
+
+; Adds "Open with PhotoSwipe" to the context menu for folders and folder backgrounds.
+; Replace C:\\Path\\To\\PhotoSwipe.exe below with the real path to PhotoSwipe.exe,
+; then double-click this file. The change is per-user (HKCU) and needs no admin rights.
+; On Windows 11, the entry may appear under "Show more options".
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\PhotoSwipe]
+@="Open with PhotoSwipe"
+"Icon"="C:\\Path\\To\\PhotoSwipe.exe,0"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\PhotoSwipe\command]
+@="\"C:\\Path\\To\\PhotoSwipe.exe\" \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PhotoSwipe]
+@="Open with PhotoSwipe"
+"Icon"="C:\\Path\\To\\PhotoSwipe.exe,0"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PhotoSwipe\command]
+@="\"C:\\Path\\To\\PhotoSwipe.exe\" \"%V\""

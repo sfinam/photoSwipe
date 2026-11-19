@@ -78,6 +78,7 @@ class I18nTests(unittest.TestCase):
         self.assertEqual(portable_data_dir(), portable_root() / "PhotoSwipeData")
         self.assertTrue(_parse_args(["--portable"]).portable)
         self.assertFalse(_parse_args([]).portable)
+        self.assertEqual(_parse_args(["/photos"]).folder, "/photos")
 
     def test_light_and_dark_theme_palettes(self) -> None:
         try:

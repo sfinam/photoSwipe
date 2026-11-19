@@ -298,6 +298,31 @@ class MainWindow(QMainWindow):
         self.toast.hide()
 
     # ------------------------------------------------------------------
+    def open_folder(self, path: str) -> None:
+        """Add and open a folder passed by the OS or command line."""
+        folder = Path(path).expanduser()
+        try:
+            folder = folder.resolve()
+        except OSError:
+            pass
+        if folder.is_file():
+            folder = folder.parent
+        if not folder.is_dir():
+            self.toast.show_message(
+                tr("Folder not found: {path}", path=folder), "error", 5000
+            )
+            return
+        before = len(self.config.sources)
+        try:
+            source = self.config.add_source(folder)
+        except ValueError as error:
+            self.toast.show_message(str(error), "error", 5000)
+            return
+        if len(self.config.sources) != before:
+            self._save_config()
+            self._refresh_library()
+        self.open_source(source.id)
+
     def add_source(self) -> None:
         pictures = Path.home() / "Pictures"
         remembered = self._ui_state.get("last_add_dir")

@@ -79,6 +79,64 @@ The folder is then self-contained — move it to another PC or USB drive with th
 
 After building on Windows, `packaging/make_portable_windows.ps1` creates a ready-to-copy `dist\PhotoSwipePortable` folder with the executable, data marker, and launcher.
 
+### Open a folder from the file manager
+
+PhotoSwipe accepts a folder as a command-line argument, adds it to the library, and opens it immediately:
+
+```text
+PhotoSwipe.exe "D:\Photos\2026-05"
+photoswipe /home/me/Pictures/2026-05
+```
+
+This is what makes **Open with PhotoSwipe** work from Explorer, Nautilus, Dolphin, and other file managers.
+
+#### Windows context menu
+
+1. Use the packaged `PhotoSwipe.exe` and copy the path to it.
+2. Open [packaging/windows-open-with-photoswipe.reg](packaging/windows-open-with-photoswipe.reg), replace every `C:\\Path\\To\\PhotoSwipe.exe` with your real path, and save the file. `.reg` files require doubled backslashes — keep that formatting.
+3. Double-click the `.reg` file and confirm the import.
+4. Right-click a folder → **Open with PhotoSwipe**. The entry is also available on the empty background inside a folder.
+
+The file adds these per-user keys (no administrator rights required):
+
+```text
+HKEY_CURRENT_USER\Software\Classes\Directory\shell\PhotoSwipe\command
+HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PhotoSwipe\command
+```
+
+The folder key uses `%1`; the background key uses `%V`. On Windows 11, the entry may appear under **Show more options**.
+
+To remove it, delete the `PhotoSwipe` keys under `HKEY_CURRENT_USER\Software\Classes\Directory\shell` and `...\Directory\Background\shell`.
+
+If you run from a Python environment instead of a packaged `.exe`, set the command to the environment’s `pythonw.exe` with `-m photoswipe "%1"`, for example:
+
+```text
+"C:\Projects\photoSwipe\.venv\Scripts\pythonw.exe" -m photoswipe "%1"
+```
+
+#### Linux file manager
+
+1. Copy [packaging/photoswipe.desktop](packaging/photoswipe.desktop) to `~/.local/share/applications/photoswipe.desktop`.
+2. Set `Exec` to the real command, for example `Exec=/opt/PhotoSwipe/PhotoSwipe %f` or `Exec=/home/me/photoSwipe/.venv/bin/photoswipe %f`, and set `Icon` to an icon path.
+3. Run:
+
+```bash
+update-desktop-database ~/.local/share/applications
+```
+
+4. Right-click a folder → **Open With** → **PhotoSwipe**. Some file managers call this **Other Application**.
+
+If your file manager does not offer applications for directories, use the optional Nautilus script:
+
+```bash
+mkdir -p ~/.local/share/nautilus/scripts
+cp packaging/nautilus-open-with-photoswipe.sh \
+  ~/.local/share/nautilus/scripts/"Open with PhotoSwipe"
+chmod +x ~/.local/share/nautilus/scripts/"Open with PhotoSwipe"
+```
+
+Edit the `exec` line in the copied script to point at PhotoSwipe. The script appears in the right-click **Scripts** menu.
+
 ### Run from source
 
 ```bash

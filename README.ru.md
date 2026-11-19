@@ -79,6 +79,64 @@ PhotoSwipe.exe --portable
 
 После сборки на Windows скрипт `packaging/make_portable_windows.ps1` создаёт готовую к копированию папку `dist\PhotoSwipePortable` с `.exe`, маркером данных и ярлыком запуска.
 
+### Открытие папки из файлового менеджера
+
+PhotoSwipe принимает папку аргументом командной строки, добавляет её в библиотеку и сразу открывает:
+
+```text
+PhotoSwipe.exe "D:\Фото\2026-05"
+photoswipe /home/me/Pictures/2026-05
+```
+
+Именно это используется пунктом **Открыть с помощью PhotoSwipe** в Проводнике, Nautilus, Dolphin и других файловых менеджерах.
+
+#### Контекстное меню Windows
+
+1. Возьмите собранный `PhotoSwipe.exe` и скопируйте путь к нему.
+2. Откройте [packaging/windows-open-with-photoswipe.reg](packaging/windows-open-with-photoswipe.reg), замените все `C:\\Path\\To\\PhotoSwipe.exe` на реальный путь и сохраните файл. В `.reg` обратные слэши удваиваются — это синтаксис реестра.
+3. Дважды щёлкните `.reg` и подтвердите импорт.
+4. Щёлкните папку правой кнопкой → **Открыть с помощью PhotoSwipe**. Пункт также доступен на пустом месте внутри папки.
+
+Файл добавляет ключи только для текущего пользователя (права администратора не нужны):
+
+```text
+HKEY_CURRENT_USER\Software\Classes\Directory\shell\PhotoSwipe\command
+HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\PhotoSwipe\command
+```
+
+Для папки используется `%1`, для фона папки — `%V`. В Windows 11 пункт может находиться в **Показать дополнительные параметры**.
+
+Чтобы удалить пункт, удалите ключи `PhotoSwipe` в `HKEY_CURRENT_USER\Software\Classes\Directory\shell` и `...\Directory\Background\shell`.
+
+Если приложение запускается из Python-окружения, а не из `.exe`, укажите `pythonw.exe` этого окружения с `-m photoswipe "%1"`, например:
+
+```text
+"C:\Projects\photoSwipe\.venv\Scripts\pythonw.exe" -m photoswipe "%1"
+```
+
+#### Файловый менеджер Linux
+
+1. Скопируйте [packaging/photoswipe.desktop](packaging/photoswipe.desktop) в `~/.local/share/applications/photoswipe.desktop`.
+2. Укажите в `Exec` реальную команду, например `Exec=/opt/PhotoSwipe/PhotoSwipe %f` или `Exec=/home/me/photoSwipe/.venv/bin/photoswipe %f`, а в `Icon` — путь к иконке.
+3. Выполните:
+
+```bash
+update-desktop-database ~/.local/share/applications
+```
+
+4. Щёлкните папку правой кнопкой → **Открыть с помощью** → **PhotoSwipe**. В некоторых менеджерах пункт называется **Другое приложение**.
+
+Если файловый менеджер не показывает приложения для папок, используйте необязательный скрипт Nautilus:
+
+```bash
+mkdir -p ~/.local/share/nautilus/scripts
+cp packaging/nautilus-open-with-photoswipe.sh \
+  ~/.local/share/nautilus/scripts/"Open with PhotoSwipe"
+chmod +x ~/.local/share/nautilus/scripts/"Open with PhotoSwipe"
+```
+
+Измените строку `exec` в скопированном скрипте на путь к PhotoSwipe. Скрипт появится в контекстном меню **Скрипты**.
+
 ### Запуск из исходников
 
 ```bash
