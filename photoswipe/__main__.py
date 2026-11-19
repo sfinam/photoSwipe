@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+import traceback
+from pathlib import Path
+
+
+def _parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="photoswipe", description="PhotoSwipe — быстрый сортировщик фотографий"
+    )
+    parser.add_argument(
+        "--data-dir", help="Папка для настроек, сессий и кэша (по умолчанию системная)"
+    )
+    parser.add_argument(
+        "--version", action="store_true", help="Показать версию и выйти"
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(list(sys.argv[1:] if argv is None else argv))
+    if args.version:
+        from . import __version__
+
+        print(f"PhotoSwipe {__version__}")
+        return 0
+    if args.data_dir:
+        os.environ["PHOTOSWIPE_DATA_DIR"] = str(
+            Path(args.data_dir).expanduser().resolve()
+        )
+
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QIcon
+    from PySide6.QtWidgets import QApplication, QMessageBox
+
+    from . import __version__
+    from .paths import data_dir, ensure_dirs
+    from .ui.icons import brand_pixmap
+    from .ui.main_window import MainWindow
+    from .ui.theme import apply_theme
+
+    ensure_dirs()
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "PhotoSwipe.Desktop"
+            )
+        except Exception:
+            pass
+
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+    )
+    app = QApplication(sys.argv[:1])
+    app.setApplicationName("PhotoSwipe")
+    app.setApplicationDisplayName("PhotoSwipe")
+    app.setOrganizationName("PhotoSwipe")
+    app.setApplicationVersion(__version__)
+    app.setWindowIcon(QIcon(brand_pixmap(64)))
+    if sys.platform.startswith("linux"):
+        app.setDesktopFileName("photoswipe")
+    apply_theme(app)
+
+    def exception_hook(exc_type, exc_value, exc_tb) -> None:
+        detail = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        try:
+            log = data_dir() / "error.log"
+            with log.open("a", encoding="utf-8") as handle:
+                handle.write(detail + "\n")
+        except OSError:
+            pass
+        try:
+            QMessageBox.critical(
+                None,
+                "PhotoSwipe — ошибка",
+                f"Что-то пошло не так.\n\n{exc_value}\n\nПодробности записаны в error.log.",
+            )
+        except Exception:
+            print(detail, file=sys.stderr)
+
+    sys.excepthook = exception_hook
+    window = MainWindow()
+    window.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

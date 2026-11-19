@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "photoswipe"
+version = "0.1.0"
+description = "PhotoSwipe — быстрый кроссплатформенный сортировщик фотографий с RAW, свайпами и сравнением"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "PhotoSwipe"}]
+keywords = ["photography", "culling", "raw", "pyside6", "desktop"]
+dependencies = [
+    "PySide6>=6.8,<7",
+    "Pillow>=11",
+    "pillow-heif>=1.0",
+    "rawpy>=0.24",
+    "exifread>=3.0",
+    "platformdirs>=4",
+    "pygame-ce>=2.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-qt>=4",
+    "pyinstaller>=6.10",
+]
+
+[project.scripts]
+photoswipe = "photoswipe.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["photoswipe*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

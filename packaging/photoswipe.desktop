@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PhotoSwipe
+GenericName=Photo Culling
+Comment=Быстрый локальный сортировщик фотографий с RAW и сравнением
+Exec=photoswipe
+Icon=photoswipe
+Terminal=false
+Categories=Graphics;Photography;
+Keywords=photo;raw;culling;sort;фотографии;
+StartupWMClass=PhotoSwipe
