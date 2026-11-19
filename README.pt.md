@@ -209,7 +209,8 @@ Os formatos suportados incluem:
 - Os arquivos são movidos, não copiados: eles não permanecem na pasta de origem.
 - Arquivos existentes nunca são sobrescritos; nomes em conflito recebem um sufixo.
 - Antes de mover, o PhotoSwipe confirma que todos os arquivos do grupo estão presentes; em caso de falha, reverte os arquivos já movidos.
-- As últimas **120 ações** são persistidas e podem ser desfeitas mesmo após reiniciar. Se um arquivo foi movido ou excluído fora do aplicativo, o desfazer informa o problema em vez de adivinhar.
+- A **profundidade do desfazer** é configurável em **Configurações → Comportamento** (1 a 1000 etapas, padrão **120**). Cada etapa armazena caminhos, metadados do grupo e operações de movimentação, não cópias das fotos. Um histórico maior aumenta o JSON da sessão e deixa salvar/abrir um pouco mais lento, mas permite desfazer mais longe após reiniciar. Um histórico menor economiza disco e mantém as gravações mais leves, mas reduz a profundidade. Ao atingir o limite, as etapas mais antigas são descartadas.
+- Se um arquivo foi movido ou excluído fora do aplicativo, o desfazer informa o problema em vez de adivinhar.
 - A **Lixeira** é uma pasta normal, não a lixeira do sistema. Isso mantém o desfazer previsível.
 - **Redefinir progresso** limpa contadores e o histórico de desfazer dessa pasta, mas não restaura nem exclui arquivos já organizados.
 
@@ -260,7 +261,7 @@ python -m unittest discover -s tests -t . -v
 python -m photoswipe
 ```
 
-Os testes usam os arquivos reais `A7309498.ARW` e `A7309498.JPG` na raiz do repositório: agrupamento, metadados, modos de exibição RAW, prévias, movimentação, sidecars, pulo de uma foto na comparação, segunda rodada, desfazer, troca de idioma, caminhos portáteis e inicialização da interface. A suíte tem 36 testes.
+Os testes usam os arquivos reais `A7309498.ARW` e `A7309498.JPG` na raiz do repositório: agrupamento, metadados, modos de exibição RAW, prévias, movimentação, sidecars, pulo de uma foto na comparação, limite de desfazer, segunda rodada, desfazer, troca de idioma, caminhos portáteis e inicialização da interface. A suíte tem 39 testes.
 
 ### Build autônomo
 

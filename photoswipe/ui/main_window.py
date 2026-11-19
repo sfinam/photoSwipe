@@ -611,6 +611,12 @@ class MainWindow(QMainWindow):
             self.current_session.destinations = self.config.destinations.for_source(
                 self.current_source
             )
+            try:
+                self.current_session.save()
+            except OSError as error:
+                self.toast.show_message(
+                    tr("Could not save the session: {error}", error=error), "error"
+                )
         self._refresh_library()
         self.toast.show_message(tr("Settings saved"), "success")
         if self.config.behavior.raw_view_mode != old_raw_mode:
@@ -618,6 +624,8 @@ class MainWindow(QMainWindow):
                 self.compare_page.reload(force=True)
             else:
                 self.sorting_page.apply_view_mode()
+        elif self._in_compare:
+            self.compare_page.reload()
         elif self.stack.currentWidget() is self.sorting_page:
             self.sorting_page.refresh(force=True)
 

@@ -262,7 +262,7 @@ class HelpDialog(QDialog):
         layout.addWidget(
             self._note(
                 tr(
-                    "Everything runs locally. Files are moved, not copied, with name-collision checks. The last 120 actions can be undone even after a restart. App data and preview cache live in the system app folder and never inside your photo library."
+                    "Everything runs locally. Files are moved, not copied, with name-collision checks. The configured number of actions (120 by default) can be undone even after a restart; adjust it in Settings → Behavior. App data and preview cache live in the system app folder and never inside your photo library."
                 )
             )
         )

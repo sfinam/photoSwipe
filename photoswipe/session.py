@@ -17,7 +17,6 @@ from .scanner import ProgressFn, scan_source
 
 VERDICTS = ("favorite", "trash", "maybe", "round2")
 MOVE_VERDICTS = ("favorite", "trash", "maybe")
-MAX_JOURNAL = 120
 
 
 class SessionError(RuntimeError):
@@ -246,7 +245,8 @@ class SortSession:
         self.state["deferred"] = sorted(self.deferred_set)
         self.state["last_remaining"] = len(self.queue) + len(self.first_round_pending)
         self.state["meta_cache"] = self.meta_cache
-        self.state["journal"] = self.state.get("journal", [])[-MAX_JOURNAL:]
+        undo_limit = int(getattr(self.config.behavior, "undo_limit", 120))
+        self.state["journal"] = self.state.get("journal", [])[-max(1, undo_limit) :]
         self.manager.write_state(self.state)
 
     # ---- decisions -------------------------------------------------------

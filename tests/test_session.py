@@ -129,6 +129,45 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(reopened3.stats["favorite"], 0)
         self.assertTrue((root / "A7309498.ARW").exists())
 
+    def test_undo_history_respects_configured_limit(self) -> None:
+        root = self.ws.make_pair()
+        shutil.copy2(root / "A7309498.JPG", root / "IMG_0002.JPG")
+        shutil.copy2(root / "A7309498.JPG", root / "IMG_0003.JPG")
+        config = Config()
+        config.behavior.undo_limit = 2
+        source = config.add_source(root, recursive=False)
+        store = ConfigStore(self.ws.base / "limit-config.json")
+        store._config = config
+        store.save()
+        manager = SessionManager(store)
+        session = manager.open(source)
+        for verdict in ("favorite", "trash", "maybe"):
+            session.decide([session.queue[0]], [verdict])
+        self.assertEqual(session.undo_depth, 2)
+        self.assertEqual(len(session.state["journal"]), 2)
+        session.undo()
+        session.undo()
+        with self.assertRaises(SessionError):
+            session.undo()
+
+    def test_lowering_undo_limit_trims_history(self) -> None:
+        root = self.ws.make_pair()
+        shutil.copy2(root / "A7309498.JPG", root / "IMG_0002.JPG")
+        config = Config()
+        config.behavior.undo_limit = 10
+        source = config.add_source(root, recursive=False)
+        store = ConfigStore(self.ws.base / "trim-config.json")
+        store._config = config
+        store.save()
+        manager = SessionManager(store)
+        session = manager.open(source)
+        for verdict in ("favorite", "trash"):
+            session.decide([session.queue[0]], [verdict])
+        self.assertEqual(session.undo_depth, 2)
+        session.config.behavior.undo_limit = 1
+        session.save()
+        self.assertEqual(session.undo_depth, 1)
+
     def test_summary_reports_processed_and_remaining(self) -> None:
         root = self.ws.make_pair()
         manager, source = self._manager(root)

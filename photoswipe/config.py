@@ -347,6 +347,7 @@ class Behavior:
     recursive_default: bool = True
     animations: bool = True
     raw_view_mode: str = "jpeg"  # jpeg | thumbnail | full
+    undo_limit: int = 120
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any] | None) -> "Behavior":
@@ -354,11 +355,17 @@ class Behavior:
         mode = raw.get("raw_view_mode")
         if mode not in {"jpeg", "thumbnail", "full"}:
             mode = "full" if raw.get("raw_full_decode") is True else "jpeg"
+        try:
+            undo_limit = int(raw.get("undo_limit", 120))
+        except (TypeError, ValueError):
+            undo_limit = 120
+        undo_limit = min(1000, max(1, undo_limit))
         return cls(
             sort_by="name" if raw.get("sort_by") == "name" else "date",
             recursive_default=raw.get("recursive_default", True) is not False,
             animations=raw.get("animations", True) is not False,
             raw_view_mode=mode,
+            undo_limit=undo_limit,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -367,6 +374,7 @@ class Behavior:
             "recursive_default": self.recursive_default,
             "animations": self.animations,
             "raw_view_mode": self.raw_view_mode,
+            "undo_limit": self.undo_limit,
         }
 
 

@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QScrollArea,
     QSlider,
+    QSpinBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -599,6 +600,34 @@ class SettingsDialog(QDialog):
         body.addWidget(self.recursive_check)
         layout.addWidget(panel)
 
+        layout.addWidget(
+            _title(
+                tr("Undo history"),
+                tr("How many actions can be undone after restarting the app."),
+            )
+        )
+        undo_panel, undo_body = _panel()
+        undo_row = QHBoxLayout()
+        undo_label = QLabel(tr("Undo steps"))
+        undo_label.setStyleSheet(f"color: {theme.TEXT}; font-size: 9.5pt;")
+        self.undo_limit_spin = QSpinBox()
+        self.undo_limit_spin.setRange(1, 1000)
+        self.undo_limit_spin.setValue(int(self.config.behavior.undo_limit))
+        self.undo_limit_spin.setFixedWidth(105)
+        undo_row.addWidget(undo_label)
+        undo_row.addStretch(1)
+        undo_row.addWidget(self.undo_limit_spin)
+        undo_body.addLayout(undo_row)
+        undo_hint = QLabel(
+            tr(
+                "Each undo step stores file paths and metadata, not copies of the photos. A larger history makes the session file bigger and slightly slower to save or open, but it lets you undo further back, even after a restart. A smaller history reduces disk use but limits undo depth. When the limit is reached, the oldest steps are dropped."
+            )
+        )
+        undo_hint.setWordWrap(True)
+        undo_hint.setStyleSheet(f"color: {theme.TEXT_MUTED}; font-size: 8.8pt;")
+        undo_body.addWidget(undo_hint)
+        layout.addWidget(undo_panel)
+
         layout.addWidget(_title(tr("RAW"), tr("Affects viewing quality and speed.")))
         panel2, body2 = _panel()
         raw_row = QHBoxLayout()
@@ -947,6 +976,7 @@ class SettingsDialog(QDialog):
         self.config.behavior.raw_view_mode = str(
             self.raw_view_combo.currentData() or "jpeg"
         )
+        self.config.behavior.undo_limit = int(self.undo_limit_spin.value())
         self.config.controller.enabled = self.controller_enabled.isChecked()
         self.config.controller.deadzone = self.deadzone_slider.value() / 100.0
         self.config.controller.vibration = self.vibration_check.isChecked()

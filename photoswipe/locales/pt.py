@@ -353,3 +353,14 @@ TRANSLATIONS.update(
         "Files with the same name and different extensions are treated as one photo. You can switch between ARW and JPEG for viewing, but a decision applies to the whole pair, including XMP and other sidecar files. Press T or use the RAW display button to cycle between the paired JPEG, the embedded RAW preview and a full RAW decode.": "Arquivos com o mesmo nome e extensões diferentes são tratados como uma foto. Você pode alternar entre ARW e JPEG para visualizar, mas a decisão vale para o par inteiro, incluindo XMP e outros sidecars. Pressione T ou use o botão de exibição RAW para alternar entre o JPEG do par, a prévia RAW embutida e a decodificação RAW completa.",
     }
 )
+
+TRANSLATIONS.update(
+    {
+        "Undo history": "Histórico de desfazer",
+        "How many actions can be undone after restarting the app.": "Quantas ações podem ser desfeitas após reiniciar o aplicativo.",
+        "Undo steps": "Etapas de desfazer",
+        "Each undo step stores file paths and metadata, not copies of the photos. A larger history makes the session file bigger and slightly slower to save or open, but it lets you undo further back, even after a restart. A smaller history reduces disk use but limits undo depth. When the limit is reached, the oldest steps are dropped.": "Cada etapa de desfazer armazena caminhos de arquivos e metadados, não cópias das fotos. Um histórico maior aumenta o arquivo da sessão e deixa salvar/abrir um pouco mais lento, mas permite desfazer mais longe, inclusive após reiniciar. Um histórico menor economiza disco, mas limita a profundidade do desfazer. Ao atingir o limite, as etapas mais antigas são descartadas.",
+        "Could not save the session: {error}": "Não foi possível salvar a sessão: {error}",
+        "Everything runs locally. Files are moved, not copied, with name-collision checks. The configured number of actions (120 by default) can be undone even after a restart; adjust it in Settings → Behavior. App data and preview cache live in the system app folder and never inside your photo library.": "Tudo roda localmente. Os arquivos são movidos, não copiados, com verificação de conflitos de nome. A quantidade configurada de ações (120 por padrão) pode ser desfeita mesmo após reiniciar; ajuste em Configurações → Comportamento. Dados e cache de prévias ficam na pasta do sistema, nunca na sua biblioteca de fotos.",
+    }
+)

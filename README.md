@@ -209,7 +209,8 @@ Supported formats include:
 - Files are moved, not copied: they do not remain in the source folder.
 - Existing files are never overwritten; colliding names get a suffix.
 - Before moving, PhotoSwipe verifies that every file in the group is present; on failure it rolls back files already moved.
-- The last **120 actions** are persisted and can be undone even after a restart. If a file was moved or deleted outside the app, undo reports the problem instead of guessing.
+- **Undo depth** is configurable in **Settings → Behavior** (1–1000 steps, default **120**). Each step stores file paths, group metadata, and move operations — not copies of the photos. A larger history makes the session JSON larger and makes saving/opening marginally slower; it also lets you undo further back after a restart. A smaller history saves disk space and keeps session writes lighter, but reduces undo depth. When the limit is reached, the oldest steps are dropped.
+- If a file was moved or deleted outside the app, undo reports the problem instead of guessing.
 - **Trash** is a normal folder, not the system recycle bin. This keeps undo predictable.
 - **Reset progress** clears counters and undo history for that folder but does not restore or delete files that were already sorted.
 
@@ -260,7 +261,7 @@ python -m unittest discover -s tests -t . -v
 python -m photoswipe
 ```
 
-The tests use the real `A7309498.ARW` and `A7309498.JPG` files in the repository root: grouping, metadata, RAW display modes, previews, moves, sidecars, comparison skip, second round, undo, language switching, portable paths, and UI startup are covered. The suite currently has 36 tests.
+The tests use the real `A7309498.ARW` and `A7309498.JPG` files in the repository root: grouping, metadata, RAW display modes, previews, moves, sidecars, comparison skip, undo limits, second round, undo, language switching, portable paths, and UI startup are covered. The suite currently has 39 tests.
 
 ### Standalone build
 

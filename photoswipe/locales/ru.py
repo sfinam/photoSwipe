@@ -353,3 +353,14 @@ TRANSLATIONS.update(
         "Files with the same name and different extensions are treated as one photo. You can switch between ARW and JPEG for viewing, but a decision applies to the whole pair, including XMP and other sidecar files. Press T or use the RAW display button to cycle between the paired JPEG, the embedded RAW preview and a full RAW decode.": "Файлы с одинаковым именем и разными расширениями считаются одной фотографией. Можно переключать ARW и JPEG для просмотра, но решение применяется ко всей паре, включая XMP и другие sidecar-файлы. Нажмите T или кнопку отображения RAW, чтобы переключать парный JPEG, встроенное RAW-превью и полное декодирование RAW.",
     }
 )
+
+TRANSLATIONS.update(
+    {
+        "Undo history": "История отмены",
+        "How many actions can be undone after restarting the app.": "Сколько действий можно отменить после перезапуска приложения.",
+        "Undo steps": "Шагов отмены",
+        "Each undo step stores file paths and metadata, not copies of the photos. A larger history makes the session file bigger and slightly slower to save or open, but it lets you undo further back, even after a restart. A smaller history reduces disk use but limits undo depth. When the limit is reached, the oldest steps are dropped.": "Каждый шаг отмены хранит пути к файлам и метаданные, а не копии фотографий. Большая история увеличивает файл сессии и немного замедляет сохранение и открытие, но позволяет отменять действия глубже, в том числе после перезапуска. Маленькая история экономит место на диске, но ограничивает глубину отмены. При достижении предела самые старые шаги удаляются.",
+        "Could not save the session: {error}": "Не удалось сохранить сессию: {error}",
+        "Everything runs locally. Files are moved, not copied, with name-collision checks. The configured number of actions (120 by default) can be undone even after a restart; adjust it in Settings → Behavior. App data and preview cache live in the system app folder and never inside your photo library.": "Всё работает локально. Файлы перемещаются, а не копируются, с проверкой конфликтов имён. Настроенное число действий (по умолчанию 120) можно отменить даже после перезапуска; измените его в «Настройки → Поведение». Данные и кэш превью лежат в системной папке приложения и не попадают в вашу фотобиблиотеку.",
+    }
+)
